@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { Feather } from '@expo/vector-icons'; // Chevron icon
 import { db, collection, getDocs } from "../firebaseConfig";
 import { useFonts, OpenSans_400Regular, OpenSans_700Bold, OpenSans_600SemiBold } from '@expo-google-fonts/open-sans';
-
+import { Footer } from "../components/Footer"; // Import the Footer component
 interface Category {
   name: string;
   image: string;
@@ -139,15 +139,7 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push("/Homepage")}> 
-          <Text style={styles.navItem}>Home</Text>
-         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/StoreSelectionScreen")}> <Text style={styles.navItem}>🔄 Switch Stores</Text> </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/Categories")}> <Text style={[styles.navItem, { color: "#00B900" }]}>🟢 Categories</Text> </TouchableOpacity>
-        <TouchableOpacity> <Text style={styles.navItem}>👤 Account</Text> </TouchableOpacity>
-      </View>
+      <Footer />
     </View>
   );
 }
@@ -254,16 +246,6 @@ const styles = StyleSheet.create({
   },
 
   // Bottom Navigation
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    borderTopWidth: 1,
-    borderColor: "#ccc",
-    paddingVertical: 10,
-  },
-  navItem: {
-    alignItems: "center",
-  },
 
   // Dropdown Modal
   modalOverlay: {
