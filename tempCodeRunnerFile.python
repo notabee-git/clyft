@@ -1,0 +1,70 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define parameters
+num_simulations = 1000  # Number of simulations
+num_scenarios = 5  # Number of disruption scenarios
+
+# Supplier data
+supplier_capacity = [100, 120, 80]  # Capacity of each supplier
+fixed_costs = [500, 600, 400]  # Fixed costs of contracting each supplier
+purchase_costs = [10, 12, 9]  # Purchase costs per unit from each supplier
+
+# Disruption data (for simplicity, we assume binary disruption states: 0 = no disruption, 1 = disruption)
+disruption_probabilities = [0.3, 0.2, 0.5]  # Probabilities of disruption for each supplier
+severity = [0.5, 0.7, 0.3]  # Severity of the disruption (0 = no disruption, 1 = full disruption)
+resilience_investment = [50, 70, 30]  # Investment in resilience measures for each supplier
+
+# Scenario costs
+spot_market_cost = 20  # Cost per unit if spot purchase is needed
+shortage_cost = 100  # Cost per unit if there is a shortage
+
+# Simulate the supply chain for each scenario
+def simulate_supply_chain():
+    total_cost = 0
+    total_supply = 0
+    for i in range(len(supplier_capacity)):
+        # Random disruption scenario (0 = no disruption, 1 = disruption)
+        disruption = np.random.choice([0, 1], p=[1 - disruption_probabilities[i], disruption_probabilities[i]])
+        
+        # Calculate available supply based on disruption and resilience investment
+        if disruption == 1:
+            available_supply = supplier_capacity[i] * severity[i]
+            # Apply resilience investment to reduce the severity
+            available_supply += resilience_investment[i]
+        else:
+            available_supply = supplier_capacity[i]
+        
+        # Calculate costs
+        total_cost += fixed_costs[i]  # Fixed cost of contracting
+        total_cost += purchase_costs[i] * available_supply  # Purchase cost
+        
+        # If the supply is insufficient, apply spot market or shortage cost
+        if total_supply < 100:  # Assume demand is 100 units for simplicity
+            shortage = 100 - total_supply
+            total_cost += shortage_cost * shortage  # Shortage cost
+            total_supply += available_supply  # Fulfill some demand from available supply
+        else:
+            total_supply += available_supply  # Fulfill demand from available supply
+
+    return total_cost
+
+# Run simulations
+simulation_results = [simulate_supply_chain() for _ in range(num_simulations)]
+
+# Analyze the results
+average_cost = np.mean(simulation_results)
+min_cost = np.min(simulation_results)
+max_cost = np.max(simulation_results)
+
+# Output results
+print(f"Average Cost: {average_cost:.2f}")
+print(f"Min Cost: {min_cost:.2f}")
+print(f"Max Cost: {max_cost:.2f}")
+
+# Plot distribution of total costs
+plt.hist(simulation_results, bins=50, color='skyblue', edgecolor='black')
+plt.title('Distribution of Total Costs')
+plt.xlabel('Total Cost')
+plt.ylabel('Frequency')
+plt.show()

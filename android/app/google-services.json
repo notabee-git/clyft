@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "340964667090",
+    "project_id": "clyft-d6bf7",
+    "storage_bucket": "clyft-d6bf7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:340964667090:android:573ade89ade5c80600870b",
+        "android_client_info": {
+          "package_name": "clyft.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8W8RFJxVWzHLaJgpY74FXU9NtowzbnIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
