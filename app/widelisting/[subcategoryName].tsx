@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from "react
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { db } from "../../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
-
+import { Footer } from "../../components/Footer";
 interface WideItem {
   name: string;
   image: string;
@@ -42,7 +42,7 @@ export default function WidelistingScreen() {
     <View style={styles.categoryItem}>
       <TouchableOpacity
         onPress={() => {
-          // handle widelisting item click if needed
+          router.push('/Product_page')
         }}
       >
         <Image source={{ uri: item.image }} style={styles.categoryImage} resizeMode="cover" />
@@ -70,22 +70,8 @@ export default function WidelistingScreen() {
           />
         )}
       </View>
-
+        <Footer/>
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push("/Homepage")}>
-          <Text style={styles.navItem}>🏠 Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/StoreSelectionScreen")}>
-          <Text style={styles.navItem}>🔄 Switch Stores</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/Categories")}>
-          <Text style={[styles.navItem, { color: "#00B900" }]}>🟢 Categories</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.navItem}>👤 Account</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
