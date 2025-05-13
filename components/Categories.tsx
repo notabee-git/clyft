@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { db, collection, getDocs } from "../firebaseConfig"; // Make sure to update path
-
+import { Footer } from "../components/Footer";
 interface Category {
   name: string;
   image: string;
@@ -68,20 +68,7 @@ export default function CategoriesScreen() {
       </View>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push("/Homepage")}>
-          <Text style={styles.navItem}>🏠 Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/StoreSelectionScreen")}>
-          <Text style={styles.navItem}>🔄 Switch Stores</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/Categories")}>
-          <Text style={[styles.navItem, { color: "#00B900" }]}>🟢 Categories</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.navItem}>👤 Account</Text>
-        </TouchableOpacity>
-      </View>
+      <Footer/>
     </View>
   );
 }

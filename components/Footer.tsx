@@ -1,64 +1,88 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Modal,
-} from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { Feather } from '@expo/vector-icons'; // Chevron icon
-import { db, collection, getDocs } from "../firebaseConfig";
-import { useFonts, OpenSans_400Regular, OpenSans_700Bold, OpenSans_600SemiBold } from '@expo-google-fonts/open-sans';
+import { useRouter, usePathname } from "expo-router";
 
 export const Footer = () => {
-    const router = useRouter();
-    return(
-<View style={styles.bottomNav}>
-      <TouchableOpacity style={styles.navItem} onPress={() => router.push("/Homepage")}>
-        <Ionicons name="home" size={24} color="black" />
-        <Text style={styles.navText}>Home</Text>
-      </TouchableOpacity>
+  const router = useRouter();
+  const pathname = usePathname();
 
-      <TouchableOpacity style={styles.navItem} onPress={() => router.push("/StoreSelectionScreen")}>
-        <Ionicons name="swap-horizontal" size={24} color="black" />
-        <Text style={styles.navText}>Switch Stores</Text>
-      </TouchableOpacity>
+  const isCategoriesActive = [
+    "/Categories",
+    "/Product_page",         
+    "/subcategories/[categoryName]",    
+    "/widelisting/[subcategoryName]",     // <- add any others as needed
+  ].includes(pathname);
 
-      <TouchableOpacity style={styles.navItem} onPress={() => router.push("/Categories")}>
-        <Ionicons name="grid" size={24} color="#00B900" />
-        <Text style={[styles.navText, { color: "#00B900" }]}>Categories</Text>
-      </TouchableOpacity>
+  const tabs = [
+    {
+      name: "Home",
+      icon: "home" as const,
+      route: "/Homepage",
+      active: pathname === "/Homepage",
+    },
+    {
+      name: "Switch Stores",
+      icon: "swap-horizontal" as const,
+      route: "/StoreSelectionScreen",
+      active: pathname === "/StoreSelectionScreen",
+    },
+    {
+      name: "Categories",
+      icon: "grid" as const,
+      route: "/Categories",
+      active: isCategoriesActive,
+    },
+    {
+      name: "Account",
+      icon: "person" as const,
+      route: "/Account",
+      active: pathname === "/Account",
+    },
+  ];
 
-      <TouchableOpacity style={styles.navItem}>
-        <Ionicons name="person" size={24} color="black" />
-        <Text style={styles.navText}>Account</Text>
-      </TouchableOpacity>
+  return (
+    <View style={styles.bottomNav}>
+      {tabs.map((tab, index) => (
+        <TouchableOpacity
+          key={index}
+          style={styles.navItem}
+          onPress={() => router.push(tab.route as any)}
+        >
+          <Ionicons
+            name={tab.icon}
+            size={24}
+            color={tab.active ? "#00B900" : "black"}
+          />
+          <Text
+            style={[
+              styles.navText,
+              { color: tab.active ? "#00B900" : "black" },
+            ]}
+          >
+            {tab.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
-    )
-}
+  );
+};
+
 const styles = StyleSheet.create({
-    bottomNav: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        paddingVertical: 10,
-        borderTopWidth: 1,
-        borderColor: "#ccc",
-        fontFamily: "OpenSans_400Regular",
-      },
-      navItem: {
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        fontFamily: "OpenSans_400Regular",
-      },
-      navText: {
-        fontSize: 12,
-        marginTop: 4,  // Add space between the icon and the text
-        fontFamily: "OpenSans_400Regular",
-      },
-})
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderColor: "#ccc",
+  },
+  navItem: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navText: {
+    fontSize: 12,
+    marginTop: 4,
+    fontFamily: "OpenSans_400Regular",
+  },
+});
