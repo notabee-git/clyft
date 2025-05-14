@@ -1,135 +1,131 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { RadioButton } from 'react-native-paper';
-import { Feather, AntDesign } from '@expo/vector-icons';
-const mockAddresses = [
-  {
-    id: '1',
-    name: 'Sathwik',
-    address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
-    mobile: '8008687540',
-  },
-  {
-    id: '2',
-    name: 'Sathwik',
-    address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
-    mobile: '8008687540',
-  },
-];
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { AntDesign } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
-export default function AddressScreen() {
-  const [selectedAddress, setSelectedAddress] = useState('1');
+export default function SelectAddressScreen() {
+  const router = useRouter();
+
+  // Variables/constants at the top
+  const addresses = [
+    {
+      id: 1,
+      name: 'Sathwik',
+      address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
+      mobile: '8008687540',
+    },
+    {
+      id: 2,
+      name: 'Sathwik',
+      address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
+      mobile: '8008687540',
+    },
+  ];
+
+  const [selectedId, setSelectedId] = useState(addresses[0].id);
+
+  // Render addresses using a for loop
+  const renderAddresses = () => {
+    const addressElements = [];
+    for (let i = 0; i < addresses.length; i++) {
+      const item = addresses[i];
+      const isSelected = selectedId === item.id;
+
+      addressElements.push(
+        <View key={item.id} style={styles.addressBox}>
+          <TouchableOpacity
+            style={styles.radioRow}
+            onPress={() => setSelectedId(item.id)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.radioOuter}>
+              {isSelected && <View style={styles.radioInner} />}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nameText}>{item.name}</Text>
+              <Text style={styles.addressText}>{item.address}</Text>
+              <Text style={styles.mobileText}>
+                Mobile : <Text style={{ fontWeight: 'bold' }}>{item.mobile}</Text>
+              </Text>
+
+              {/* Show Remove and Edit only if selected */}
+              {isSelected && (
+                <View style={styles.actionRow}>
+                  <TouchableOpacity style={styles.removeBtn}>
+                    <Text style={styles.actionBtnText}>REMOVE</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.editBtn}>
+                    <Text style={styles.actionBtnText}>EDIT</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return addressElements;
+  };
 
   return (
-    <View style={styles.container}>
-    <View style={styles.progressBar}>
-          <Text style={styles.progressActive}>                 </Text>
-          {/* <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} /> */}
-          <Text style={styles.progressInactive}>          Cart</Text>
-          <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
-          <Text style={styles.progressActive}>Address</Text>
-          <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
-          <Text style={styles.progressInactive}>Payment</Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={{ padding: 4 }}>
+          <AntDesign name="arrowleft" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}> Address</Text>
+        <View style={{ width: 24 }} />
+      </View>
 
-      {/* Add Address */}
-      <TouchableOpacity style={styles.addAddressBtn}>
-        <Text style={styles.addAddressText}>ADD A NEW ADDRESS</Text>
+      {/* Progress Bar */}
+      <View style={styles.progressBar}>
+        <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
+        <Text style={styles.progressActive}>Cart</Text>
+        <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
+        <Text style={styles.progressActive}>Address</Text>
+        <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
+        <Text style={styles.progressInactive}>Payment</Text>
+      </View>
+
+      {/* Add New Address Button */}
+      <TouchableOpacity style={styles.addAddressButton}>
+        <Text style={styles.addAddressText} onPress={() => router.push('./enter-address')}>ADD A NEW ADDRESS</Text>
       </TouchableOpacity>
 
-      {/* Address List */}
-      <ScrollView style={{ flex: 1 }}>
-        {mockAddresses.map(addr => (
-          <View key={addr.id} style={styles.addressCard}>
-            <View style={styles.radioContainer}>
-              <RadioButton
-                value={addr.id}
-                status={selectedAddress === addr.id ? 'checked' : 'unchecked'}
-                onPress={() => setSelectedAddress(addr.id)}
-              />
-              <View>
-                <Text style={styles.name}>{addr.name}</Text>
-                <Text>{addr.address}</Text>
-                <Text style={styles.mobile}>Mobile : <Text style={styles.bold}>{addr.mobile}</Text></Text>
-              </View>
-            </View>
-            {selectedAddress === addr.id && (
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.smallBtn}>
-                  <Text style={styles.btnText}>REMOVE</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.smallBtn}>
-                  <Text style={styles.btnText}>EDIT</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        ))}
-      </ScrollView>
+      <ScrollView>{renderAddresses()}</ScrollView>
 
       {/* Deliver Here Button */}
       <TouchableOpacity style={styles.deliverBtn}>
-        <Text style={styles.deliverText}>DELIVER HERE</Text>
+        <Text style={styles.deliverBtnText}>DELIVER HERE</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  header: { marginBottom: 16 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold' },
-  progressText: { fontSize: 14, marginTop: 4 },
-  green: { color: 'green', fontWeight: 'bold' },
-  addAddressBtn: {
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  addAddressText: { fontWeight: 'bold' },
-  addressCard: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 12,
-    borderRadius: 6,
-  },
-  radioContainer: { flexDirection: 'row', alignItems: 'flex-start' },
-  name: { fontWeight: 'bold', fontSize: 16 },
-  mobile: { marginTop: 4 },
-  bold: { fontWeight: 'bold' },
-  buttonRow: {
+  header: {
     flexDirection: 'row',
-    marginTop: 10,
-    gap: 10,
-  },
-  smallBtn: {
-    borderWidth: 1,
-    borderColor: '#000',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 4,
-  },
-  btnText: { fontWeight: 'bold' },
-  deliverBtn: {
-    backgroundColor: '#000',
-    padding: 16,
     alignItems: 'center',
-    marginTop: 10,
+    paddingTop: 16,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    justifyContent: 'space-between',
   },
-  deliverText: {
-    color: '#fff',
+  headerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
+    flex: 1,
+    textAlign: 'left',
+    color: '#000',
   },
   progressBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 10,
-    marginTop: 10,
+    justifyContent: 'center',
+    marginVertical: 10,
   },
   progressActive: {
     color: '#0C8744',
@@ -148,5 +144,112 @@ const styles = StyleSheet.create({
   progressArrowInactive: {
     marginHorizontal: 6,
     color: '#000',
+  },
+  addAddressButton: {
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 6,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    marginTop: 6,
+    paddingVertical: 18,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  addAddressText: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#000',
+    letterSpacing: 0.5,
+  },
+  addressBox: {
+    backgroundColor: '#fafafa',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    marginTop: 3,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#000',
+  },
+  nameText: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 2,
+    color: '#000',
+  },
+  addressText: {
+    color: '#222',
+    fontSize: 14,
+    marginBottom: 2,
+    marginTop: 2,
+    lineHeight: 18,
+  },
+  mobileText: {
+    color: '#000',
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  removeBtn: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 3,
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    marginRight: 10,
+    backgroundColor: '#fff',
+  },
+  editBtn: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 3,
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    backgroundColor: '#fff',
+  },
+  actionBtnText: {
+    fontWeight: 'bold',
+    color: '#000',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  deliverBtn: {
+    backgroundColor: '#000',
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 6,
+  },
+  deliverBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 1,
   },
 });

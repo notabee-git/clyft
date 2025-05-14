@@ -36,21 +36,20 @@ export default function CartScreen() {
   const GrandTotal = 200;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}> 
-    {/* changed safe SafeAreaView */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
 
         {/* Header */}
-        {/* <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.replace('/Homepage')} style={styles.header}>
           <Feather name="arrow-left" size={22} color="#222" />
           <Text style={styles.headerTitle}>Your Cart</Text>
-        </View> */}
+        </TouchableOpacity>
 
         {/* Progress Bar */}
         <View style={styles.progressBar}>
           <Text style={styles.progressActive}>                 </Text>
-          {/* <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} /> */}
-          <Text style={styles.progressActive}>          Cart</Text>
+          <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
+          <Text style={styles.progressActive}>Cart</Text>
           <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
           <Text style={styles.progressInactive}>Address</Text>
           <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
@@ -63,7 +62,7 @@ export default function CartScreen() {
             <Text>
               Deliver to: <Text style={styles.addressName}>Sathwik, 500019</Text>
             </Text>
-            <TouchableOpacity onPress={() => router.navigate('/select-address')}>
+            <TouchableOpacity onPress={() => router.push('/Select_address')}>
                 <Text style={styles.changeText}>Change</Text>
             </TouchableOpacity>
           </View>
@@ -115,7 +114,7 @@ export default function CartScreen() {
           <Text style={styles.totalAmount}>₹{Total}</Text>
           
           <TouchableOpacity style={styles.placeOrderButton}>
-            <Text style={styles.placeOrderText} onPress={() => router.push('/Select_address')}>Place Order</Text>
+            <Text style={styles.placeOrderText} onPress={() => router.push('/Delivery_estimate')}>Place Order</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity>
@@ -151,7 +150,7 @@ export default function CartScreen() {
             </View>
             </View> 
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -175,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 10,
-    marginTop: 10,
+    marginTop: 2,
   },
   progressActive: {
     color: '#0C8744',
