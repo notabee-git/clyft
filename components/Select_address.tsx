@@ -91,14 +91,14 @@ export default function SelectAddressScreen() {
 
       {/* Add New Address Button */}
       <TouchableOpacity style={styles.addAddressButton}>
-        <Text style={styles.addAddressText} onPress={() => router.push('./enter-address')}>ADD A NEW ADDRESS</Text>
+        <Text style={styles.addAddressText} onPress={() => router.push('/Addaddress')}>ADD A NEW ADDRESS</Text>
       </TouchableOpacity>
 
       <ScrollView>{renderAddresses()}</ScrollView>
 
       {/* Deliver Here Button */}
       <TouchableOpacity style={styles.deliverBtn}>
-        <Text style={styles.deliverBtnText}>DELIVER HERE</Text>
+        <Text style={styles.deliverBtnText} onPress={() => router.push('/payment')}>DELIVER HERE</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
