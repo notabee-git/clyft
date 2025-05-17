@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,74 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign, Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { Footer } from "../components/Footer"; // Import the Footer component
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { db } from "../firebaseConfig";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { useCart,  } from "../context/cartContext";
+
+
+
+interface PriceTier {
+  min: number;
+  max: number | null;
+  price: number;
+}
+
+interface Variant {
+  size: string;
+  priceTiers: PriceTier[];
+}
+
+interface WideItemFb {
+  name: string;
+  subcategoryName: string;
+  image: string;
+  bestSellingPrice: number;
+  variants: Variant[];
+}
 
 export default function ProductDetailScreen() {
   const router = useRouter();
+  const { name } = useLocalSearchParams();
+  const [widelisting, setWidelisting] = useState<WideItemFb[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColour, setSelectedColour] = useState<string | null>(null);
+
+  const { addToCart, incrementItem, decrementItem } = useCart();
+
+  useEffect(() => {
+  const fetchWidelisting = async () => {
+    try {
+      const q = query(collection(db, "widelisting"), where("name", "==", name));
+      const snapshot = await getDocs(q);
+      const wideList = snapshot.docs.map(doc => doc.data() as WideItemFb);
+      setWidelisting(wideList);
+
+      // Set default selections based on fetched data
+      if (wideList.length > 0) {
+        const item = wideList[0];
+        if (item.variants?.length > 0) {
+          setSelectedSize(item.variants[0].size);
+        }
+        // If colorOptions exist
+        if ((item as any).colorOptions?.length > 0) {
+          setSelectedColor((item as any).colorOptions[0].color);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching widelisting:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchWidelisting();
+}, []);
+
 
   const productData = {
     id: "12345",
@@ -58,22 +120,38 @@ export default function ProductDetailScreen() {
     defaultQuantity: 1
   };
 
-  const [quantity, setQuantity] = useState(productData.defaultQuantity);
+  // const [quantity, setQuantity] = useState(productData.defaultQuantity);
   const [selectedWeight, setSelectedWeight] = useState(productData.sizeOptions[0].size);
   const [isInWishlist, setIsInWishlist] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(productData.colorOptions[0].color);
   const [showingOptions, setShowingOptions] = useState<'size' | 'color'>('size');
 
-  const increaseQuantity = () => setQuantity(prev => prev + 1);
-  const decreaseQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+  const increaseQuantity = () => {
+    setCartCount(prev => prev + 1);
+    // incrementItem(widelisting[0].name);
+  };
+  
+  const decreaseQuantity = () => {
+    setCartCount(prev => (prev > 1 ? prev - 1 : 1));
+    // decrementItem(widelisting[0].name);
+  }
   const toggleWishlist = () => setIsInWishlist(prev => !prev);
 
   const handleAddToCart = () => {
-    setCartCount(prevCount => prevCount + 1);
+    // setCartCount(prevCount => prevCount + 1);
     // Add additional cart logic here if needed
-  };
+    const quantityToAdd = cartCount > 0 ? cartCount : 1;
+    const item = {
+      name: widelisting[0].name,
+      image: widelisting[0]?.image ?? '',
+      price: 1,
+      quantity: quantityToAdd,
+    };
+    addToCart(item);
+  alert("Added to cart!");
+};
 
   const getCurrentPrice = () => {
     const option = productData.sizeOptions.find(o => o.size === selectedWeight);
@@ -89,186 +167,192 @@ export default function ProductDetailScreen() {
   const toggleOptionsView = (option: 'size' | 'color') => setShowingOptions(option);
   const handleColorSelect = (color: string) => setSelectedColor(color);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        {/* <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <AntDesign name="arrowleft" size={24} color="#333" />
+ return (
+  <View style={styles.container}>
+    
+    <View style={styles.header}>
+      {/* Uncomment if needed */}
+      {/* <View style={styles.headerTop}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <AntDesign name="arrowleft" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Product Detail</Text>
+        <TouchableOpacity style={styles.cartButton}>
+          <Feather name="shopping-cart" size={24} color="#333" />
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View> */}
+      <View style={styles.locationContainer}>
+        <Text style={styles.locationText}>Delivery to</Text>
+        <Text>
+          {`${productData.deliveryLocation.area}, ${productData.deliveryLocation.city}, ${productData.deliveryLocation.pincode}`}
+        </Text>
+      </View>
+    </View>
+
+    <ScrollView style={styles.scrollView}>
+      {/* IMAGE CAROUSEL */}
+      <View style={styles.imageCarousel}>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          style={styles.carouselScroll}
+        >
+          {widelisting.length > 0 && widelisting[0].image && (
+            <View
+              style={{
+                width: SCREEN_WIDTH,
+                height: 250,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Image
+                source={{ uri: widelisting[0].image }}
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={styles.imageActions}>
+          <TouchableOpacity style={styles.iconButton} onPress={toggleWishlist}>
+            <AntDesign
+              name={isInWishlist ? "heart" : "hearto"}
+              size={24}
+              color="#e63946"
+            />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Product Detail</Text>
-          <TouchableOpacity style={styles.cartButton}>
-            <Feather name="shopping-cart" size={24} color="#333" />
-            {cartCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartCount}</Text>
-              </View>
-            )}
+          <TouchableOpacity style={styles.iconButton}>
+            <Feather name="share-2" size={24} color="#333" />
           </TouchableOpacity>
-        </View> */}
-        <View style={styles.locationContainer}>
-          <Text style={styles.locationText}>Delivery to</Text>
-          <Text>
-            {`${productData.deliveryLocation.area}, ${productData.deliveryLocation.city}, ${productData.deliveryLocation.pincode}`}
-          </Text>
+        </View>
+
+        <View style={styles.carouselIndicators}>
+          {productData.images.map((_, i) => (
+            <View
+              key={i}
+              style={i === currentImageIndex ? styles.activeIndicator : styles.inactiveIndicator}
+            />
+          ))}
         </View>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {/* IMAGE CAROUSEL */}
-        <View style={styles.imageCarousel}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={onMomentumScrollEnd}
-            style={styles.carouselScroll}
-          >
-            {productData.images.map((src, idx) => (
-              <View key={idx} style={{ width: SCREEN_WIDTH, height: 250, justifyContent: 'center', alignItems: 'center' }}>
-                <Image source={src} style={styles.carouselImage} resizeMode="contain" />
-              </View>
-            ))}
-          </ScrollView>
-          <View style={styles.imageActions}>
-            <TouchableOpacity style={styles.iconButton} onPress={toggleWishlist}>
-              <AntDesign name={isInWishlist ? "heart" : "hearto"} size={24} color="#e63946" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
-              <Feather name="share-2" size={24} color="#333" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.carouselIndicators}>
-            {productData.images.map((_, i) => (
-              <View
-                key={i}
-                style={i-1 === currentImageIndex ? styles.activeIndicator : styles.inactiveIndicator}
-              />
-            ))}
+      {/* PRODUCT DETAILS */}
+      <View style={styles.productDetails}>
+        <View style={styles.brandRatingContainer}>
+          <Text style={styles.brandText}>
+            {widelisting.length > 0 ? widelisting[0].subcategoryName : ""}
+          </Text>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingNumber}>{productData.rating.toFixed(1)}</Text>
+            <View style={styles.starContainer}>
+              {[1, 2, 3, 4, 5].map((star, index) => (
+                <AntDesign
+                  key={index}
+                  name={index < Math.round(productData.rating) ? "star" : "staro"}
+                  size={16}
+                  color="#fbbf24"
+                />
+              ))}
+            </View>
+            <Text style={styles.reviewCount}>({productData.reviewCount})</Text>
           </View>
         </View>
+      </View>
 
-        {/* PRODUCT DETAILS */}
-        <View style={styles.productDetails}>
-          <View style={styles.brandRatingContainer}>
-            <Text style={styles.brandText}>{productData.brand}</Text>
-            <View style={styles.ratingContainer}>
-              <Text style={styles.ratingNumber}>{productData.rating.toFixed(1)}</Text>
-              <View style={styles.starContainer}>
-                {[1, 2, 3, 4, 5].map((star, index) => (
-                  <AntDesign
-                    key={index}
-                    name={index < Math.round(productData.rating) ? "star" : "staro"}
-                    size={16}
-                    color="#fbbf24"
-                  />
-                ))}
-              </View>
-              <Text style={styles.reviewCount}>({productData.reviewCount})</Text>
-            </View>
-          </View>
-          <Text style={styles.productDescription}>{productData.name}</Text>
-          <View style={styles.priceContainer}>
-            <Text style={styles.currentPrice}>₹{getCurrentPrice()}</Text>
-            <View style={styles.mrpContainer}>
-              <Text style={styles.mrpLabel}>MRP:</Text>
-              <Text style={styles.mrpValue}>₹{productData.mrp}</Text>
-              <Text style={styles.discountPercentage}>({productData.discountPercentage}% off)</Text>
-            </View>
-          </View>
-          <Text style={styles.helpText}>{productData.helpText}</Text>
+      <Text style={styles.helpText}>{productData.helpText}</Text>
 
-          {/* Option selectors */}
-          <View style={styles.optionSelectorContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionSelectorTab,
-                showingOptions === "size" && styles.activeOptionSelectorTab,
-              ]}
-              onPress={() => toggleOptionsView("size")}
-            >
-              <Text style={styles.optionSelectorText}>Size</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.optionSelectorTab,
-                showingOptions === "color" && styles.activeOptionSelectorTab,
-              ]}
-              onPress={() => toggleOptionsView("color")}
-            >
-              <Text style={styles.optionSelectorText}>Colour</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Option selectors */}
+      <View style={styles.optionSelectorContainer}>
+        <TouchableOpacity
+          style={[
+            styles.optionSelectorTab,
+            showingOptions === "size" && styles.activeOptionSelectorTab,
+          ]}
+          onPress={() => toggleOptionsView("size")}
+        >
+          <Text style={styles.optionSelectorText}>Size</Text>
+        </TouchableOpacity>
 
-          {showingOptions === "size" ? (
-            <View style={styles.sizeOptionsContainer}>
-              {productData.sizeOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.size}
-                  style={[
-                    styles.sizeOption,
-                    selectedWeight === option.size && styles.selectedSizeOption,
-                  ]}
-                  onPress={() => setSelectedWeight(option.size)}
-                >
-                  <Text style={styles.sizeText}>{option.size}</Text>
-                  <Text style={styles.sizePrice}>₹{option.price}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.colorOptionsContainer}>
-              {productData.colorOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.color}
-                  style={[
-                    styles.colorOption,
-                    selectedColor === option.color && styles.selectedColorOption,
-                  ]}
-                  onPress={() => handleColorSelect(option.color)}
-                >
-                  <Text style={styles.colorText}>{option.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+        <TouchableOpacity
+          style={[
+            styles.optionSelectorTab,
+            showingOptions === "color" && styles.activeOptionSelectorTab,
+          ]}
+          onPress={() => toggleOptionsView("color")}
+        >
+          <Text style={styles.optionSelectorText}>Colour</Text>
+        </TouchableOpacity>
+      </View>
 
-          <Text style={styles.sectionTitle}>Price/pc as per quantity</Text>
-          <View style={styles.bulkPricingContainer}>
-            {productData.bulkPricing.map((pricing) => (
-              <View key={pricing.range} style={styles.bulkPriceOption}>
-                <Text style={styles.bulkPriceRange}>{pricing.range}</Text>
+      {/* Option Buttons */}
+      {showingOptions === "size" ? (
+        <View style={styles.sizeOptionsContainer}>
+          {widelisting.length > 0 &&
+            widelisting[0]?.variants?.map((option) => (
+              <TouchableOpacity
+                key={option.size}
+                style={[
+                  styles.sizeOption,
+                  selectedSize === option.size && styles.selectedSizeOption,
+                ]}
+                onPress={() => setSelectedSize(option.size)}
+              >
+                <Text style={styles.sizeText}>{option.size}</Text>
+              </TouchableOpacity>
+            ))}
+        </View>
+      ) : null}
+
+      <Text style={styles.sectionTitle}>Price/pc as per quantity</Text>
+      <View style={styles.bulkPricingContainer}>
+        {widelisting.length > 0 &&
+          widelisting[0].variants
+            .find((variant) => variant.size === selectedSize)
+            ?.priceTiers.map((pricing, index) => (
+              <View key={index} style={styles.bulkPriceOption}>
+                <Text style={styles.bulkPriceRange}>
+                  {pricing.min} - {pricing.max ?? "∞"}
+                </Text>
                 <Text style={styles.bulkPriceValue}>₹{pricing.price}</Text>
               </View>
             ))}
-          </View>
+      </View>
 
-          <View style={styles.addToCartContainer}>
-            <Text style={styles.quantityTitle}>Enter Quantity</Text>
-            <View style={styles.quantityCartRow}>
-              <View style={styles.quantitySelector}>
-                <TouchableOpacity style={styles.quantityButton} onPress={decreaseQuantity}>
-                  <AntDesign name="minus" size={16} color="#333" />
-                </TouchableOpacity>
-                <View style={styles.quantityValueContainer}>
-                  <Text style={styles.quantityLabel}>Default</Text>
-                  <Text style={styles.quantityValue}>{quantity}</Text>
-                </View>
-                <TouchableOpacity style={styles.quantityButton} onPress={increaseQuantity}>
-                  <AntDesign name="plus" size={16} color="#333" />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-                <Text style={styles.addToCartText}>Add to cart</Text>
-                <Feather name="shopping-cart" size={20} color="#fff" style={styles.cartIcon} />
-              </TouchableOpacity>
+      <View style={styles.addToCartContainer}>
+        <Text style={styles.quantityTitle}>Enter Quantity</Text>
+        <View style={styles.quantityCartRow}>
+          <View style={styles.quantitySelector}>
+            <TouchableOpacity style={styles.quantityButton} onPress={decreaseQuantity}>
+              <AntDesign name="minus" size={16} color="#333" />
+            </TouchableOpacity>
+            <View style={styles.quantityValueContainer}>
+              <Text style={styles.quantityLabel}>Default</Text>
+              <Text style={styles.quantityValue}>{cartCount}</Text>
             </View>
+            <TouchableOpacity style={styles.quantityButton} onPress={increaseQuantity}>
+              <AntDesign name="plus" size={16} color="#333" />
+            </TouchableOpacity>
           </View>
+          <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
+            <Text style={styles.addToCartText}>Add to cart</Text>
+            <Feather name="shopping-cart" size={20} color="#fff" style={styles.cartIcon} />
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-      <Footer/>
-    </View>
-  );
+      </View>
+    </ScrollView>
+    <Footer />
+    
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
@@ -476,15 +560,18 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 10,
     marginBottom: 16,
+    paddingLeft:15,
   },
   sectionTitle: {
     fontWeight: '500',
     fontSize: 16,
     marginBottom: 8,
+    paddingLeft:18,
   },
   optionSelectorContainer: {
     flexDirection: 'row',
     marginBottom: 8,
+    paddingLeft:15,
   },
   optionSelectorTab: {
     paddingHorizontal: 16,
@@ -503,6 +590,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     marginBottom: 10,
+    paddingLeft:15,
   },
   colorOptionsContainer: {
     flexDirection: 'row',
@@ -540,9 +628,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 60,
     justifyContent: 'center',
+    
   },
   selectedSizeOption: {
     backgroundColor: '#fbbf24',
+    
   },
   sizeText: {
     fontSize: 14,
@@ -550,11 +640,13 @@ const styles = StyleSheet.create({
   sizePrice: {
     fontWeight: 'bold',
     fontSize: 16,
+    
   },
   bulkPricingContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 32,
+    paddingLeft:15,
   },
   bulkPriceOption: {
     backgroundColor: '#d1d5db',

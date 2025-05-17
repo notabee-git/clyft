@@ -42,7 +42,12 @@ export default function WidelistingScreen() {
     <View style={styles.categoryItem}>
       <TouchableOpacity
         onPress={() => {
-          router.push('/Product_page')
+          router.push({ 
+            pathname: "/Product_page", 
+            params: { 
+              name: item.name,
+            } 
+          });
         }}
       >
         <Image source={{ uri: item.image }} style={styles.categoryImage} resizeMode="cover" />

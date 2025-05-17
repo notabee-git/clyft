@@ -1,44 +1,31 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, FlatList } from 'react-native';
 import { Feather, AntDesign } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
+import { useCart } from '@/context/cartContext';
+
 export default function CartScreen() {
-  const router = useRouter();  
+  const router = useRouter();
+  const { cart, incrementItem, decrementItem } = useCart();
 
-  const [cartItems] = useState([
-    {
-      name: 'Karimnagar Red Bricks',
-      description: 'Description of Karimnagar Red Bricks',
-      price: 12500,
-      originalPrice: 15000,
-      discount: 15.7,
-      quantity: 5000,
-      image: require('../assets/cement.png'),
-    },
-    {
-      name: 'Karimnagar Red Bricks',
-      description: 'Description of Karimnagar Red Bricks',
-      price: 12500,
-      originalPrice: 15000,
-      discount: 15.7,
-      quantity: 5000,
-      image: require('../assets/cement.png'),
-    },
-  ]);
-
-  const Total = 100;
-  const GST = 18;
-  const Discount = 0;
-  const DeliveryFee = 20;
-  const PlatformFee = 20;
-  const GrandTotal = 200;
+  // Calculate totals dynamically
+  const Total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const GST = +(Total * 0.18).toFixed(2); // 18% GST
+  const Discount = cart.reduce((sum, item) => {
+    if (item.price && item.price > item.price) {
+      return sum + (item.price - item.price) * item.quantity;
+    }
+    return sum;
+  }, 0);
+  const DeliveryFee = 20; // static or calculated as needed
+  const PlatformFee = 20; // static or calculated as needed
+  const GrandTotal = +(Total + GST + DeliveryFee + PlatformFee - Discount).toFixed(2);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-
+      {/* <ScrollView contentContainerStyle={{ paddingBottom: 32 }}> */}
         {/* Header */}
         <TouchableOpacity onPress={() => router.replace('/Homepage')} style={styles.header}>
           <Feather name="arrow-left" size={22} color="#222" />
@@ -63,7 +50,7 @@ export default function CartScreen() {
               Deliver to: <Text style={styles.addressName}>Sathwik, 500019</Text>
             </Text>
             <TouchableOpacity onPress={() => router.push('/Select_address')}>
-                <Text style={styles.changeText}>Change</Text>
+              <Text style={styles.changeText}>Change</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -75,84 +62,109 @@ export default function CartScreen() {
         </TouchableOpacity>
 
         {/* Cart Items */}
-        {cartItems.map((item, index) => (
-        <View key={index} style={styles.card}>
-          <View style={{ flexDirection: 'row' }}>
-            <Image source={item.image} style={styles.itemImage} />
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemDesc}>{item.description}</Text>
-              <View style={styles.qtyRow}>
-                <Text style={styles.qtyLabel}>Qty:</Text>
-                <Text style={styles.qtyValue}>{item.quantity}</Text>
-              </View>
-              <View style={styles.priceRow}>
-                <Text style={styles.itemPrice}>₹{item.price}</Text>
-                <Text style={styles.itemOriginalPrice}>₹{item.originalPrice}</Text>
-                <Text style={styles.itemDiscount}>({item.discount}% off)</Text>
-              </View>
+        <FlatList
+          data={cart}
+          keyExtractor={(item, index) => item.name + index}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row' }}>
+                <Image
+                  source={{ uri: item.image || 'https://via.placeholder.com/100' }}
+                  style={styles.itemImage}
+                />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.itemName}>{item.name}</Text>
 
-              {/* Action Row */}
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.outlinedButton}>
-                  <Feather name="bookmark" size={16} color="#0C8744" />
-                  <Text style={styles.outlinedButtonTextGreen}>Save for Later</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.outlinedButton}>
-                  <Feather name="trash-2" size={16} color="#D32F2F" />
-                  <Text style={styles.outlinedButtonTextRed}>Remove</Text>
-                </TouchableOpacity>
+                  {/* Quantity Row */}
+                  <View style={styles.qtyRow}>
+                    <Text style={styles.qtyLabel}>Qty:</Text>
+                    <TouchableOpacity onPress={() => decrementItem(item.name)} style={styles.qtyButton}>
+                      <Text>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.qtyValue}>{item.quantity}</Text>
+                    <TouchableOpacity onPress={() => incrementItem(item.name)} style={styles.qtyButton}>
+                      <Text>+</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Price Row */}
+                  <View style={styles.priceRow}>
+                    <Text style={styles.itemPrice}>₹{item.price.toFixed(2)}</Text>
+                    {item.price && item.price > item.price && (
+                      <>
+                        <Text style={styles.itemOriginalPrice}>₹{item.price.toFixed(2)}</Text>
+                        <Text style={styles.itemDiscount}>
+                          ({Math.round(((item.price - item.price) / item.price) * 100)}% off)
+                        </Text>
+                      </>
+                    )}
+                  </View>
+
+                  {/* Action Row */}
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity style={styles.outlinedButton}>
+                      <Feather name="bookmark" size={16} color="#0C8744" />
+                      <Text style={styles.outlinedButtonTextGreen}>Save for Later</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.outlinedButton} onPress={() => decrementItem(item.name)}>
+                      <Feather name="trash-2" size={16} color="#D32F2F" />
+                      <Text style={styles.outlinedButtonTextRed}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </View>
-          </View>
-        </View>
-      ))}
-
+          )}
+        />
 
         {/* Total and Place Order */}
         <View style={styles.totalRow}>
-          <Text style={styles.totalAmount}>₹{Total}</Text>
-          
+          <Text style={styles.totalAmount}>₹{GrandTotal.toFixed(2)}</Text>
+
           <TouchableOpacity style={styles.placeOrderButton}>
-            <Text style={styles.placeOrderText} onPress={() => router.push('/Delivery_estimate')}>Place Order</Text>
+            <Text style={styles.placeOrderText} onPress={() => router.push('/Delivery_estimate')}>
+              Place Order
+            </Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity>
-            <Text style={styles.viewDetailsTotal}>View Details</Text>
+          <Text style={styles.viewDetailsTotal}>View Details</Text>
         </TouchableOpacity>
+
         {/* Bill Summary */}
         <View style={styles.billSummary}>
-            <Text style={styles.billHeader}>Bill Summary</Text>
-            <View style={styles.billRow}>
-                <Text>Total</Text>
-                <Text>₹{Total}</Text>
-            </View>
-            <View style={styles.billRow}>
-                <Text>GST</Text>
-                <Text>₹{GST}</Text>
-            </View>
-            <View style={styles.billRow}>
-                <Text>Discount</Text>
-                <Text>-₹{Discount}</Text>
-            </View>
-            <View style={styles.billRow}>
-                <Text>Delivery Fee</Text>
-                <Text>₹{DeliveryFee}</Text>
-            </View>
-            <View style={styles.billRow}>
-                <Text>Platform Fee</Text>
-                <Text>₹{PlatformFee}</Text>
-            </View>
-            <View style={styles.separatorLine} />
-            <View style={styles.billRow}>
-                <Text style={styles.grandTotal}>Grand Total</Text>
-                <Text style={styles.grandTotal}>₹{GrandTotal}</Text>
-            </View>
-            </View> 
-      </ScrollView>
+          <Text style={styles.billHeader}>Bill Summary</Text>
+          <View style={styles.billRow}>
+            <Text>Total</Text>
+            <Text>₹{Total.toFixed(2)}</Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text>GST</Text>
+            <Text>₹{GST.toFixed(2)}</Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text>Discount</Text>
+            <Text>-₹{Discount.toFixed(2)}</Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text>Delivery Fee</Text>
+            <Text>₹{DeliveryFee.toFixed(2)}</Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text>Platform Fee</Text>
+            <Text>₹{PlatformFee.toFixed(2)}</Text>
+          </View>
+          <View style={styles.separatorLine} />
+          <View style={styles.billRow}>
+            <Text style={styles.grandTotal}>Grand Total</Text>
+            <Text style={styles.grandTotal}>₹{GrandTotal.toFixed(2)}</Text>
+          </View>
+        </View>
+      {/* </ScrollView> */}
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   header: {
