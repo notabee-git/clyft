@@ -16,27 +16,10 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { db } from "../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useCart,  } from "../context/cartContext";
+import { WideItemFb, CartItem} from '@/constants/types';
 
 
 
-interface PriceTier {
-  min: number;
-  max: number | null;
-  price: number;
-}
-
-interface Variant {
-  size: string;
-  priceTiers: PriceTier[];
-}
-
-interface WideItemFb {
-  name: string;
-  subcategoryName: string;
-  image: string;
-  bestSellingPrice: number;
-  variants: Variant[];
-}
 
 export default function ProductDetailScreen() {
   const router = useRouter();
@@ -49,7 +32,9 @@ export default function ProductDetailScreen() {
 
   const { addToCart, incrementItem, decrementItem } = useCart();
 
-  useEffect(() => {
+  
+
+ useEffect(() => {
   const fetchWidelisting = async () => {
     try {
       const q = query(collection(db, "widelisting"), where("name", "==", name));
@@ -57,16 +42,20 @@ export default function ProductDetailScreen() {
       const wideList = snapshot.docs.map(doc => doc.data() as WideItemFb);
       setWidelisting(wideList);
 
-      // Set default selections based on fetched data
       if (wideList.length > 0) {
         const item = wideList[0];
-        if (item.variants?.length > 0) {
+
+        if (item.variants?.length > 0 && !selectedSize) {
           setSelectedSize(item.variants[0].size);
         }
-        // If colorOptions exist
-        if ((item as any).colorOptions?.length > 0) {
-          setSelectedColor((item as any).colorOptions[0].color);
+
+        const colors = (item as any).colorOptions;
+        if (Array.isArray(colors) && colors.length > 0) {
+          setSelectedColor(colors[0].color);
         }
+        if (!widelisting[0] || !selectedSize) return;
+        const index = widelisting[0].variants.findIndex(v => v.size === selectedSize);
+        setSelectedVariantIndex(index);
       }
     } catch (error) {
       console.error("Error fetching widelisting:", error);
@@ -76,7 +65,8 @@ export default function ProductDetailScreen() {
   };
 
   fetchWidelisting();
-}, []);
+}, [selectedSize]);
+
 
 
   const productData = {
@@ -127,6 +117,8 @@ export default function ProductDetailScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(productData.colorOptions[0].color);
   const [showingOptions, setShowingOptions] = useState<'size' | 'color'>('size');
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
+
 
   const increaseQuantity = () => {
     setCartCount(prev => prev + 1);
@@ -139,24 +131,41 @@ export default function ProductDetailScreen() {
   }
   const toggleWishlist = () => setIsInWishlist(prev => !prev);
 
-  const handleAddToCart = () => {
-    // setCartCount(prevCount => prevCount + 1);
-    // Add additional cart logic here if needed
-    const quantityToAdd = cartCount > 0 ? cartCount : 1;
-    const item = {
-      name: widelisting[0].name,
-      image: widelisting[0]?.image ?? '',
-      price: 1,
-      quantity: quantityToAdd,
-    };
-    addToCart(item);
-  alert("Added to cart!");
-};
+  
+
+  // Calculate selectedVariantIndex dynamically based on selected size and color
+  // const selectedVariantIndex = (() => {
+  //   if (!widelisting[0] || !selectedSize) return -1;
+  //   return widelisting[0].variants.findIndex(v => v.size === selectedSize);
+  // })();
 
   const getCurrentPrice = () => {
-    const option = productData.sizeOptions.find(o => o.size === selectedWeight);
-    return option ? option.price : productData.price;
+    if (!widelisting[0] || !selectedSize) return 0;
+    const variant = widelisting[0].variants.find(v => v.size === selectedSize);
+    if (!variant || !variant.priceTiers || variant.priceTiers.length === 0) return 0;
+    // For simplicity, return the lowest price tier
+    const slab = variant.priceTiers.find((s) => cartCount >= s.min && cartCount <= s.max);
+    return slab ? slab.price : 0;
+    // return variant.priceTiers[0].price;
   };
+
+  const handleAddToCart = () => {
+    if (!widelisting[0] || selectedVariantIndex === -1) {
+      alert("Please select a size.");
+      return;
+    }
+
+    const item: CartItem = {
+      product: widelisting[0],
+      variantIndex: selectedVariantIndex,
+      quantity: cartCount,
+      price: getCurrentPrice(),
+    };
+
+    addToCart(item);
+    alert("Added to cart!");
+  };
+
 
   const onMomentumScrollEnd = (e: any) => {
     const offsetX = e.nativeEvent.contentOffset.x;
@@ -294,21 +303,23 @@ export default function ProductDetailScreen() {
       </View>
 
       {/* Option Buttons */}
-      {showingOptions === "size" ? (
+      {showingOptions === "size" && widelisting.length > 0 ? (
         <View style={styles.sizeOptionsContainer}>
-          {widelisting.length > 0 &&
-            widelisting[0]?.variants?.map((option) => (
-              <TouchableOpacity
-                key={option.size}
-                style={[
-                  styles.sizeOption,
-                  selectedSize === option.size && styles.selectedSizeOption,
-                ]}
-                onPress={() => setSelectedSize(option.size)}
-              >
-                <Text style={styles.sizeText}>{option.size}</Text>
-              </TouchableOpacity>
-            ))}
+          {widelisting[0]?.variants?.map((option) => (
+            <TouchableOpacity
+              key={option.size}
+              style={[
+                styles.sizeOption,
+                selectedSize === option.size && styles.selectedSizeOption,
+              ]}
+              onPress={() => {
+                setSelectedSize(option.size);
+                // Optional: reset selectedColor or other states if needed
+              }}
+            >
+              <Text style={styles.sizeText}>{option.size}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       ) : null}
 

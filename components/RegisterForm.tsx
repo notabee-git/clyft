@@ -5,120 +5,93 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  signInWithEmailAndPassword,
+  PhoneAuthProvider,
+  signInWithCredential,
 } from "firebase/auth";
 
-import { auth } from "../firebaseConfig"; // adjust path if needed
+import { auth } from "../firebaseConfig";
 
 export default function RegisterForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
   const router = useRouter();
+  const recaptchaVerifier = useRef(null);
 
-  const handleEmailChange = (text: string) => {
-    setEmail(text.trim()); // optional: trim spaces
-  };
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleContinue = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("Password should be at least 6 characters.");
+  const sendVerification = async () => {
+    if (!phoneNumber.match(/^\+\d{10,}$/)) {
+      alert("Please enter a valid phone number with country code (e.g. +91...)");
       return;
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
+      const phoneProvider = new PhoneAuthProvider(auth);
+      const id = await phoneProvider.verifyPhoneNumber(
+        phoneNumber,
+        recaptchaVerifier.current!
       );
-      await sendEmailVerification(userCredential.user);
-
-      alert("Verification email sent! Please verify your email.");
-      router.push("/VerifyEmail"); // Navigate to loading screen
-    } catch (error: any) {
-      alert("Signup failed: " + error.message);
+      setVerificationId(id);
+      alert("Verification code sent to your phone.");
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to send verification code: " + err.message);
     }
   };
 
-  const FunctSignin = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("Password should be at least 6 characters.");
-      return;
-    }
-
+  const confirmCode = async () => {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      if (userCredential && userCredential.user) {
-        if (userCredential.user.emailVerified) {
-          alert("Login successful!");
-          router.push("/StoreSelectionScreen"); // Navigate only if login is valid
-        } else {
-          alert("Login failed: Email not verified.");
-        }
-      } else {
-        alert("Login failed: Invalid credentials.");
-      }
-    } catch (error: any) {
-      alert("Login failed: " + error.message);
+      const credential = PhoneAuthProvider.credential(verificationId, code);
+      await signInWithCredential(auth, credential);
+      alert("Phone authentication successful ✅");
+      router.push("/StoreSelectionScreen");
+    } catch (err: any) {
+      console.error(err);
+      alert("Invalid verification code.");
     }
   };
 
   return (
     <View style={styles.container}>
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={auth.app.options}
+      />
+
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Enter your email"
-          keyboardType="email-address"
+          placeholder="Enter your phone number"
+          keyboardType="phone-pad"
           autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
         />
+
+        <TouchableOpacity
+          style={styles.continueButton}
+          onPress={sendVerification}
+        >
+          <Text style={styles.continueText}>Send OTP</Text>
+        </TouchableOpacity>
 
         <TextInput
           style={styles.input}
-          placeholder="Enter your password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          placeholder="Enter verification code"
+          keyboardType="number-pad"
+          value={code}
+          onChangeText={setCode}
         />
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-          >
-            <Text style={styles.continueText}>Signup</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.continueButton} onPress={FunctSignin}>
-            <Text style={styles.continueText}>Signin</Text>
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity style={styles.continueButton} onPress={confirmCode}>
+          <Text style={styles.continueText}>Verify OTP</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.footerContainer}>
@@ -129,8 +102,6 @@ export default function RegisterForm() {
   );
 }
 
-// 👇 Add the styles below the component
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -139,9 +110,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between", // or 'center' if you want them close
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 10, // optional for spacing between buttons
+    gap: 10,
   },
   formContainer: {
     width: "100%",
@@ -155,9 +126,10 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     fontSize: 16,
+    marginBottom: 10,
   },
   continueButton: {
-    marginTop: 20,
+    marginTop: 10,
     backgroundColor: "#444",
     paddingVertical: 15,
     paddingHorizontal: 30,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, FlatList } from 'react-native';
 import { Feather, AntDesign } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,18 +10,35 @@ export default function CartScreen() {
   const router = useRouter();
   const { cart, incrementItem, decrementItem } = useCart();
 
-  // Calculate totals dynamically
-  const Total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const GST = +(Total * 0.18).toFixed(2); // 18% GST
-  const Discount = cart.reduce((sum, item) => {
-    if (item.price && item.price > item.price) {
-      return sum + (item.price - item.price) * item.quantity;
-    }
-    return sum;
-  }, 0);
-  const DeliveryFee = 20; // static or calculated as needed
-  const PlatformFee = 20; // static or calculated as needed
-  const GrandTotal = +(Total + GST + DeliveryFee + PlatformFee - Discount).toFixed(2);
+  const {
+    Total,
+    GST,
+    Discount,
+    DeliveryFee,
+    PlatformFee,
+    GrandTotal
+  } = useMemo(() => {
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const gst = +(total * 0.18).toFixed(2); // 18% GST
+    const discount = cart.reduce((sum, item) => {
+      if (item.price && item.price > item.price) {
+        return sum + (item.price - item.price) * item.quantity;
+      }
+      return sum;
+    }, 0);
+    const deliveryFee = 20;
+    const platformFee = 20;
+    const grandTotal = +(total + gst + deliveryFee + platformFee - discount).toFixed(2);
+
+    return {
+      Total: total,
+      GST: gst,
+      Discount: discount,
+      DeliveryFee: deliveryFee,
+      PlatformFee: platformFee,
+      GrandTotal: grandTotal
+    };
+  }, [cart]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -64,25 +81,31 @@ export default function CartScreen() {
         {/* Cart Items */}
         <FlatList
           data={cart}
-          keyExtractor={(item, index) => item.name + index}
+          keyExtractor={(item, index) => item.product.name + index}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={{ flexDirection: 'row' }}>
                 <Image
-                  source={{ uri: item.image || 'https://via.placeholder.com/100' }}
+                  source={{ uri: item.product.image || 'https://via.placeholder.com/100' }}
                   style={styles.itemImage}
                 />
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemName}>{item.product.name}</Text>
 
                   {/* Quantity Row */}
                   <View style={styles.qtyRow}>
                     <Text style={styles.qtyLabel}>Qty:</Text>
-                    <TouchableOpacity onPress={() => decrementItem(item.name)} style={styles.qtyButton}>
+                    <TouchableOpacity
+                      onPress={() => decrementItem(item.product.name, item.variantIndex)}
+                      style={styles.qtyButton}
+                    >
                       <Text>-</Text>
                     </TouchableOpacity>
                     <Text style={styles.qtyValue}>{item.quantity}</Text>
-                    <TouchableOpacity onPress={() => incrementItem(item.name)} style={styles.qtyButton}>
+                    <TouchableOpacity
+                      onPress={() => incrementItem(item.product.name, item.variantIndex)}
+                      style={styles.qtyButton}
+                    >
                       <Text>+</Text>
                     </TouchableOpacity>
                   </View>
@@ -106,7 +129,7 @@ export default function CartScreen() {
                       <Feather name="bookmark" size={16} color="#0C8744" />
                       <Text style={styles.outlinedButtonTextGreen}>Save for Later</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.outlinedButton} onPress={() => decrementItem(item.name)}>
+                    <TouchableOpacity style={styles.outlinedButton} onPress={() => decrementItem(item.product.name, item.variantIndex)}>
                       <Feather name="trash-2" size={16} color="#D32F2F" />
                       <Text style={styles.outlinedButtonTextRed}>Remove</Text>
                     </TouchableOpacity>
