@@ -35,7 +35,8 @@ const CombinedSelectionScreen: React.FC = () => {
       />
       <StoreCard
         logo={require('../assets/crew.png')}
-        onPress={() => handleStoreSelect('ClyftCrew')}
+        onPress={() => router.push('/Maps')}
+        // onPress={() => handleStoreSelect('ClyftCrew')}
       />
     </View>
   );

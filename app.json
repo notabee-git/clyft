@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.ClyftApp"
+      "bundleIdentifier": "com.anonymous.ClyftApp",
+      "config": {
+        "googleMapsApiKey": "AIzaSyCgpElcQd6qapTXYjNmTfyRB9FlnVlLdZA"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +21,12 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.ClyftApp",
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./android/app/google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCgpElcQd6qapTXYjNmTfyRB9FlnVlLdZA"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

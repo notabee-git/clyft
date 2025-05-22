@@ -50,7 +50,7 @@ export default function RegisterForm() {
       const credential = PhoneAuthProvider.credential(verificationId, code);
       await signInWithCredential(auth, credential);
       alert("Phone authentication successful ✅");
-      router.push("/StoreSelectionScreen");
+      router.push("/Maps");
     } catch (err: any) {
       console.error(err);
       alert("Invalid verification code.");
@@ -154,3 +154,4 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 });
+

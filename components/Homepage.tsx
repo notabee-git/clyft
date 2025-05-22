@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -10,27 +10,24 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Feather } from '@expo/vector-icons'; // Chevron icon
+import * as Location from "expo-location";
+
 import { db, collection, getDocs } from "../firebaseConfig";
-import { useFonts, OpenSans_400Regular, OpenSans_700Bold, OpenSans_600SemiBold } from '@expo-google-fonts/open-sans';
-import { Footer } from "../components/Footer"; // Import the Footer component
+import { Footer } from "../components/Footer";
+
+import { useLocationStore } from "./store/useLocationStore"; // ✅ Import global store
 interface Category {
   name: string;
   image: string;
 }
 
-const LOCATIONS = [
-  "Tarnaka, Hyderabad, 500019",
-  "Madhapur, Hyderabad, 500081",
-  "Banjara Hills, Hyderabad, 500034",
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState(LOCATIONS[0]);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -45,48 +42,89 @@ export default function HomeScreen() {
           };
         });
         setCategories(categoriesList);
-        setLoading(false);
       } catch (error) {
-        setLoading(false);
         console.error("Error fetching categories:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const getAddressFromCoordinates = async () => {
+      //get global coordinates from store
+      const globalCoordinates = useLocationStore.getState().globalCoordinates;
+      if (!globalCoordinates) return;
+
+      try {
+        const [location] = await Location.reverseGeocodeAsync({
+          latitude: globalCoordinates.latitude,
+          longitude: globalCoordinates.longitude,
+        });
+
+        if (location) {
+          const address = `${location.name || ""}, ${location.city || ""}, ${location.postalCode || ""}`;
+          setSelectedLocation(address.trim());
+        } else {
+          setSelectedLocation(null);
+        }
+      } catch (error) {
+        console.error("Reverse geocoding failed:", error);
+        setSelectedLocation(null);
+      }
+    };
+
+    getAddressFromCoordinates();
+  }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.greenBackground}>
-        <View style={styles.header}>
-          <View style={styles.leftHeader}>
-            <Ionicons name="location-sharp" size={30} color="white" style={{ marginRight: 8 }} />
-            <View>
-              <Text style={styles.deliveryText}>Delivery to</Text>
-              <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.dropdownTrigger}>
-                <Text style={styles.locationText} numberOfLines={1}>{selectedLocation}</Text>
-                <Ionicons name="chevron-down" size={16} color="white" />
-              </TouchableOpacity>
+          <View style={styles.header}>
+            <View style={styles.leftHeader}>
+              <Ionicons name="location-sharp" size={30} color="white" style={{ marginRight: 8 }} />
+              <View>
+                <Text style={styles.deliveryText}>Delivery to</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!selectedLocation) {
+                      router.push("/Maps");
+                    } else {
+                      setModalVisible(true);
+                    }
+                  }}
+                  style={styles.dropdownTrigger}
+                >
+                  <Text style={styles.locationText} numberOfLines={1}>
+                    {selectedLocation || "Select Location"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color="white" />
+                </TouchableOpacity>
+              </View>
             </View>
+            <TouchableOpacity onPress={() => router.push("/Cart")}>
+              <Ionicons name="cart" size={30} color="white" style={styles.cartIcon} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => router.push("/Cart")}>
-          <Ionicons name="cart" size={30} color="white" style={styles.cartIcon} />
-          </TouchableOpacity>
+
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="green" />
+            <TextInput placeholder='Search for "Cement"' style={styles.searchInput} />
+          </View>
+
+          <Image
+            source={require("../assets/Homepage_img.png")}
+            style={styles.CentreImage}
+          />
+
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>Clyft’s Intro Banners</Text>
+          </View>
         </View>
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="green" />
-          <TextInput placeholder='Search for "Cement"' style={styles.searchInput} />
-        </View>
-        <Image
-          source={require('../assets/Homepage_img.png')} // Local image
-          style={styles.CentreImage}
-        />
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>Clyft’s Intro Banners</Text>
-        </View>
-        </View>
         <Text style={styles.sectionTitle}>Shop by category</Text>
 
         <View style={styles.categoryContainer}>
@@ -114,6 +152,7 @@ export default function HomeScreen() {
           <Text style={styles.text}>See all categories</Text>
           <Feather name="chevron-right" size={18} color="#1A1A2E" />
         </TouchableOpacity>
+
         <Text style={styles.sectionTitle}>Bestsellers</Text>
         <TouchableOpacity style={styles.button} onPress={() => router.push("/Categories")}>
           <Text style={styles.text}>See all products</Text>
@@ -121,53 +160,45 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <Modal transparent visible={modalVisible} animationType="fade">
-        <TouchableOpacity style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <View style={styles.dropdown}>
-            {LOCATIONS.map((loc) => (
+      {/* Optional Modal: If you want to show pre-defined location list */}
+      {selectedLocation && (
+        <Modal transparent visible={modalVisible} animationType="fade">
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            onPress={() => setModalVisible(false)}
+          >
+            <View style={styles.dropdown}>
               <TouchableOpacity
-                key={loc}
                 onPress={() => {
-                  setSelectedLocation(loc);
                   setModalVisible(false);
+                  router.push("/Maps");
                 }}
                 style={styles.dropdownItem}
               >
-                <Text style={styles.dropdownItemText}>{loc}</Text>
+                <Text style={styles.dropdownItemText}>Change Location</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
       <Footer />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
 
-  // Header
+  greenBackground: { backgroundColor: "rgb(84, 166, 70)", padding: 16 },
+
   header: {
-    paddingHorizontal: 0,
-    paddingBottom: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  leftHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  deliveryText: {
-    fontSize: 16,
-    color: "white",
-    fontFamily: "OpenSans_400Regular",
-  },
+  leftHeader: { flexDirection: "row", alignItems: "center", flex: 1 },
+  deliveryText: { fontSize: 16, color: "white", fontFamily: "OpenSans_400Regular" },
   dropdownTrigger: {
     flexDirection: "row",
     alignItems: "center",
@@ -179,11 +210,8 @@ const styles = StyleSheet.create({
     marginRight: 4,
     fontFamily: "OpenSans_700Bold",
   },
-  cartIcon: {
-    marginLeft: "auto",
-  },
+  cartIcon: { marginLeft: "auto" },
 
-  // Search bar
   searchContainer: {
     backgroundColor: "#f5f5f5",
     margin: 2,
@@ -199,7 +227,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Banner
   banner: {
     backgroundColor: "#eee",
     height: 100,
@@ -209,71 +236,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
   },
-  bannerText: {
-    color: "#999",
-  },
+  bannerText: { color: "#999" },
 
-  // Section title
   sectionTitle: {
     fontSize: 16,
     marginLeft: 16,
     marginTop: 20,
     fontFamily: "OpenSans_700Bold",
   },
-  // Categories
+
   categoryContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-around",
     paddingTop: 16,
-    fontFamily: "OpenSans_400Regular",
   },
-  categoryItem: {
-    alignItems: "center",
-    marginHorizontal: 10,
-    marginBottom: 16,
-  },
-  categoryImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
+  categoryItem: { alignItems: "center", marginHorizontal: 10, marginBottom: 16 },
+  categoryImage: { width: 80, height: 80, borderRadius: 10, marginBottom: 8 },
   categoryText: {
     fontSize: 14,
     fontFamily: "OpenSans_600SemiBold",
     textAlign: "center",
   },
 
-  // Bottom Navigation
-
-  // Dropdown Modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
-  dropdown: {
-    backgroundColor: "white",
-    marginHorizontal: 40,
-    borderRadius: 6,
-    paddingVertical: 10,
-  },
-  dropdownItem: {
-    padding: 10,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    fontFamily: "OpenSans_700Bold",
-  },
-
-  // Green header background
-  greenBackground: {
-    backgroundColor: "rgb(84, 166, 70)",
-    padding: 16,
-  },
-
-  // Button
   button: {
     flexDirection: "row",
     backgroundColor: "#F2F2F2",
@@ -293,10 +278,27 @@ const styles = StyleSheet.create({
     marginRight: 6,
     fontFamily: "OpenSans_700Bold",
   },
-  CentreImage:{
+  CentreImage: {
     width: "100%",
     height: 150,
     borderRadius: 16,
     marginTop: 10,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.2)",
+  },
+  dropdown: {
+    backgroundColor: "white",
+    marginHorizontal: 40,
+    borderRadius: 6,
+    paddingVertical: 10,
+  },
+  dropdownItem: { padding: 10 },
+  dropdownItemText: {
+    fontSize: 16,
+    fontFamily: "OpenSans_700Bold",
   },
 });
