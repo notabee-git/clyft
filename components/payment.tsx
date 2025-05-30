@@ -3,8 +3,14 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'rea
 import { Ionicons, MaterialIcons, FontAwesome, Feather, AntDesign } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-
+import { useCart } from '../context/cartContext';
+import { getAuth } from 'firebase/auth';
+import { auth } from '../firebaseConfig'; // your Firebase config file
+import { placeOrder } from '../utils/firebaseFunctions'; // adjust path as needed
+import { Alert } from 'react-native';
 export default function PaymentScreen() {
+  const { cart, totalAmount } = useCart();
+  const user = auth.currentUser;
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('savedCard');
   const [expanded, setExpanded] = useState({
     upi: false,
@@ -20,6 +26,21 @@ export default function PaymentScreen() {
       ...prev,
       [section]: !prev[section],
     }));
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!user) {
+      Alert.alert('Not logged in', 'Please login to place your order.');
+      return;
+    }
+    try {
+      await placeOrder(cart, user.uid);
+      Alert.alert('Success', 'Order placed successfully!');
+      // router.replace('/OrderConfirmation');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to place order. Try again.');
+    }
   };
 
   // Dummy Data
@@ -225,7 +246,7 @@ export default function PaymentScreen() {
               <Text style={styles.viewDetails}>VIEW DETAILS</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.payNowButton}>
+          <TouchableOpacity style={styles.payNowButton} onPress={handlePlaceOrder}>
             <Text style={styles.payNowText}>PAY NOW</Text>
           </TouchableOpacity>
         </View>

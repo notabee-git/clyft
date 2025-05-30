@@ -10,19 +10,22 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { checkAndCreateUser } from './addUser'; // Adjust path as needed
+
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 
 import { db, collection, getDocs } from "../firebaseConfig";
 import { Footer } from "../components/Footer";
-
+import { getCurrentUserUUID } from './auth-helper'; // ✅ Import helper function to get current user UUID
 import { useLocationStore } from "./store/useLocationStore"; // ✅ Import global store
 interface Category {
   name: string;
   image: string;
 }
 
+const uuid = getCurrentUserUUID();
 export default function HomeScreen() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,6 +34,8 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
+    checkAndCreateUser(); // Ensure user is created or checked on component mount
+    // Fetch categories from Firestore
     const fetchCategories = async () => {
       try {
         const categorySnapshot = await getDocs(collection(db, "categories"));
