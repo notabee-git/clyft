@@ -16,3 +16,10 @@ export interface WideItemFb {
   bestSellingPrice: number;
   variants: Variant[];
 }
+
+export interface CartItem {
+  product: WideItemFb;
+  variantIndex: number;
+  quantity: number;
+  price: number;
+}
