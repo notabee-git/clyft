@@ -1,42 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig'; // Adjust path as needed
+
+type Address = {
+  name: string;
+  number: string;
+  street: string;
+  area: string;
+  city: string;
+  state: string;
+  pincode: string;
+};
+
 
 export default function SelectAddressScreen() {
   const router = useRouter();
 
-  // Variables/constants at the top
-  const addresses = [
-    {
-      id: 1,
-      name: 'Sathwik',
-      address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
-      mobile: '8008687540',
-    },
-    {
-      id: 2,
-      name: 'Sathwik',
-      address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
-      mobile: '8008687540',
-    },
-  ];
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const [selectedId, setSelectedId] = useState(addresses[0].id);
 
-  // Render addresses using a for loop
+  useEffect(() => {
+    const auth = getAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDocRef = doc(db, 'Users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            const fetchedAddresses = userData.address || [];
+
+            setAddresses(fetchedAddresses);
+
+            // Select default_address if available else first address
+            const defaultAddressIndex = userData.default_address ?? 0;
+            if (fetchedAddresses.length > 0) {
+              setSelectedId(defaultAddressIndex);
+            }
+          } else {
+            console.log('No such user document!');
+            setAddresses([]);
+            setSelectedId(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user addresses:', error);
+          setAddresses([]);
+          setSelectedId(null);
+        }
+      } else {
+        // User not logged in
+        setAddresses([]);
+        setSelectedId(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const renderAddresses = () => {
-    const addressElements = [];
-    for (let i = 0; i < addresses.length; i++) {
-      const item = addresses[i];
-      const isSelected = selectedId === item.id;
+    return addresses.map((item, index) => {
+      const isSelected = selectedId === index;
 
-      addressElements.push(
-        <View key={item.id} style={styles.addressBox}>
+      // Construct full address string
+      const fullAddress = `${item.street}\n${item.area}\n${item.city}, ${item.state}, ${item.pincode}`;
+
+      return (
+        <View key={index} style={styles.addressBox}>
           <TouchableOpacity
             style={styles.radioRow}
-            onPress={() => setSelectedId(item.id)}
+            onPress={() => setSelectedId(index)}
             activeOpacity={0.7}
           >
             <View style={styles.radioOuter}>
@@ -44,12 +84,11 @@ export default function SelectAddressScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.nameText}>{item.name}</Text>
-              <Text style={styles.addressText}>{item.address}</Text>
-              <Text style={styles.mobileText}>
-                Mobile : <Text style={{ fontWeight: 'bold' }}>{item.mobile}</Text>
-              </Text>
+              <Text style={styles.addressText}>{fullAddress}</Text>
+              {/* <Text style={styles.mobileText}>
+                Mobile : <Text style={{ fontWeight: 'bold' }}>{item.number}</Text>
+              </Text> */}
 
-              {/* Show Remove and Edit only if selected */}
               {isSelected && (
                 <View style={styles.actionRow}>
                   <TouchableOpacity style={styles.removeBtn}>
@@ -64,8 +103,7 @@ export default function SelectAddressScreen() {
           </TouchableOpacity>
         </View>
       );
-    }
-    return addressElements;
+    });
   };
 
   return (
@@ -90,8 +128,11 @@ export default function SelectAddressScreen() {
       </View>
 
       {/* Add New Address Button */}
-      <TouchableOpacity style={styles.addAddressButton}>
-        <Text style={styles.addAddressText} onPress={() => router.push('./enter-address')}>ADD A NEW ADDRESS</Text>
+      <TouchableOpacity
+        style={styles.addAddressButton}
+        onPress={() => router.push('./enter-address')}
+      >
+        <Text style={styles.addAddressText}>ADD A NEW ADDRESS</Text>
       </TouchableOpacity>
 
       <ScrollView>{renderAddresses()}</ScrollView>
@@ -103,6 +144,7 @@ export default function SelectAddressScreen() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   header: {

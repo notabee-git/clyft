@@ -38,17 +38,18 @@ export const checkAndCreateUser = async () => {
       // If the document does not exist, create it with sample/default user data
       const userData = {
         UUID: uuid,
-        name: 'Enter your name', // Use display name if available
+        firstName: '', // Use display name if available
+        lastName: '',
         email: user.email,
-        number: user.phoneNumber, // Replace with actual number from user input
+        contact: user.phoneNumber, // Replace with actual number from user input
         password: '12345678', // ⚠️ Avoid storing raw passwords in production
         address: [
           {
-            area: 'Hitech City',
-            city: 'Hyderabad',
-            pincode: 500081,
-            state: 'Telangana',
-            street: '123 Main st',
+            area: '',
+            city: '',
+            pincode: 0,
+            state: '',
+            street: '',
           },
         ],
       };

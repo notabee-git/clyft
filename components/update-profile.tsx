@@ -5,23 +5,28 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+import { useUser } from '../context/userContext';
+
 interface ProfileData {
   firstName: string;
   lastName: string;
   email: string;
   contactNo: string;
   dateOfBirth: Date;
-  gender: 'Male' | 'Female';
+  gender: 'Male' | 'Female' | 'Other';
 }
 
 export default function UpdateProfileScreen() {
+
+  const { user, updateUserProfile } = useUser();
+
   const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: 'Sathwik',
-    lastName: 'Padigela',
-    email: 'sathwikpadigela@gmail.com',
-    contactNo: '8008687540',
-    dateOfBirth: new Date(2003, 11, 9), 
-    gender: 'Male',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    contactNo: user?.contact || '',
+    dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
+    gender: user?.gender || 'Male',
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,34 +58,45 @@ export default function UpdateProfileScreen() {
     return `${day} - ${month} - ${year}`;
   };
 
-  const handleUpdateProfile = () => {
-    if (!profileData.firstName.trim() || !profileData.lastName.trim() || 
-        !profileData.email.trim() || !profileData.contactNo.trim()) {
+  const handleUpdateProfile = async () => {
+    if (
+      !profileData.firstName.trim() ||
+      !profileData.lastName.trim() ||
+      !profileData.email.trim() ||
+      !profileData.contactNo.trim()
+    ) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
-    Alert.alert('Success', 'Profile updated successfully', [
-      {
-        text: 'OK',
-        onPress: () => router.back(),
-      },
-    ]);
-  };
+    try {
+      await updateUserProfile({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        contact: profileData.contactNo,
+        gender: profileData.gender,
+        dateOfBirth: profileData.dateOfBirth.toISOString(),
+      });
 
-  const handleGoBack = () => {
-    router.back();
+      Alert.alert('Success', 'Profile updated successfully', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to update profile');
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Update Profile</Text>
-      </View>
+      </View> */}
 
       <View style={styles.form}>
         {/* First Name */}
@@ -95,7 +111,7 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('firstName', text)}
             onFocus={() => setFocusedField('firstName')}
             onBlur={() => setFocusedField(null)}
-            placeholder="Enter first name"
+            placeholder={user?.firstName || "Enter first name"}
           />
         </View>
 
@@ -111,7 +127,7 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('lastName', text)}
             onFocus={() => setFocusedField('lastName')}
             onBlur={() => setFocusedField(null)}
-            placeholder="Enter last name"
+            placeholder={user?.lastName || "Enter first name"}
           />
         </View>
 
@@ -127,10 +143,11 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('email', text)}
             onFocus={() => setFocusedField('email')}
             onBlur={() => setFocusedField(null)}
-            placeholder="Enter email address"
+            placeholder={user?.email || "Enter email address"}
             keyboardType="email-address"
             autoCapitalize="none"
           />
+
         </View>
 
         {/* Contact Number */}
@@ -145,9 +162,9 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('contactNo', text)}
             onFocus={() => setFocusedField('contactNo')}
             onBlur={() => setFocusedField(null)}
-            placeholder="Enter contact number"
+            placeholder={user?.contact || "Enter contact number"}
             keyboardType="numeric"
-            maxLength={10}
+            maxLength={13}
           />
         </View>
 

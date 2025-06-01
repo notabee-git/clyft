@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, TextInput,
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useUser } from '@/context/userContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -11,12 +12,15 @@ type ScreenName = '/orders' | '/Saved-Address' | '/profile' | '/help-and-support
 
 type FeatherIconName = keyof typeof Feather.glyphMap;
 
+
 // Profile Access Modal Component
 const ProfileAccessModal: React.FC<{
   visible: boolean;
   onClose: () => void;
   phoneNumber?: string;
 }> = ({ visible, onClose, phoneNumber = '+918008687540' }) => {
+
+
   const [otp, setOtp] = useState('');
   const [timeLeft, setTimeLeft] = useState(300);
   const [isResendEnabled, setIsResendEnabled] = useState(false);
@@ -185,6 +189,9 @@ const ProfileAccessModal: React.FC<{
 };
 
 export default function AccountScreen() {
+
+  const { user } = useUser();
+
   const [showMoreLanguages, setShowMoreLanguages] = useState(false);
   const [showProfileAccess, setShowProfileAccess] = useState(false);
 
@@ -230,17 +237,21 @@ export default function AccountScreen() {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>SP</Text>
+            <Text style={styles.avatarText}>
+              {user?.firstName?.[0] ?? ''}{user?.lastName?.[0] ?? ''}
+            </Text>
           </View>
           <View style={styles.profileInfo}>
             <View style={styles.nameEditRow}>
-              <Text style={styles.profileName}>Sathwik Padigela</Text>
+              <Text style={styles.profileName}>
+                {user?.firstName} {user?.lastName}
+              </Text>
               <TouchableOpacity onPress={() => router.push('/update-profile')}>
                 <Text style={styles.editButton}>Edit</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.profileEmail}>sathwikpadigela@gmail.com</Text>
-            <Text style={styles.profilePhone}>8008687540</Text>
+            <Text style={styles.profileEmail}>{user?.email}</Text>
+            <Text style={styles.profilePhone}>{user?.contact}</Text>
           </View>
         </View>
 
