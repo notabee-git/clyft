@@ -21,10 +21,22 @@ const firebaseConfig = {
   measurementId: "G-20ZKPS3WZ0"
 };
 
+
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = initializeAuth(app);
 const db = getFirestore(app);
 const firebaseApp = initializeApp(firebaseConfig);
-export { app, auth, db, collection, getDocs, firebaseApp };
+//implement doc, getDoc, setDoc, updateDoc, deleteDoc from firebase/firestore
+
+import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+
+
+const analytics = getAnalytics(app);
+
+
+export { app,analytics, auth, db, collection, getDocs, firebaseApp,doc, getDoc, setDoc, updateDoc, deleteDoc };
+
+
 

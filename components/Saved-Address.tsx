@@ -1,89 +1,209 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
-export default function SavedAddressesScreen() {
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { getCurrentUserUUID } from './auth-helper';
+import { db, doc, getDoc, updateDoc } from '../firebaseConfig';
+
+import { StyleSheet } from 'react-native';
+
+export const getUserData = async (uuid: string) => {
+  const userDoc = await getDoc(doc(db, 'Users', uuid));
+  return userDoc.exists() ? userDoc.data() : null;
+};
+
+export const updateDefaultAddress = async (uuid: string, index: number) => {
+  console.log('Updating default address at index:', index);
+  await updateDoc(doc(db, 'Users', uuid), {
+    default_address: index,
+  });
+};
+
+export const deleteAddress = async (uuid: string, updatedAddress: any[]) => {
+  await updateDoc(doc(db, 'Users', uuid), {
+    address: updatedAddress,
+  });
+};
+
+export default function SavedAddressScreen() {
   const router = useRouter();
 
-  // Default address
-  const defaultAddress = {
-    id: 1,
-    name: 'Sathwik',
-    address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
-    mobile: '8008687540',
-    isDefault: true,
-  };
+  const [defaultAddr, setDefaultAddr] = useState<Address | null>(null);
+  const [defaultAddressIndex, setDefaultAddressIndex] = useState<number | null>(null);
+  const [address, setAddress] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const uuid = getCurrentUserUUID();
 
-  // All other addresses
-  const allAddresses = [
-    {
-      id: 2,
-      name: 'Sathwik',
-      address: 'Address\nLocality/Town\nCity/District, State, Pin Code',
-      mobile: '8008687541',
-      isDefault: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchAddress = async () => {
+      try {
+        if (!uuid) {
+          setLoading(false);
+          return;
+        }
 
-  const [addresses, setAddresses] = useState(allAddresses);
-  const [defaultAddr, setDefaultAddr] = useState<{
-    id: number;
-    name: string;
-    address: string;
-    mobile: string;
-    isDefault: boolean;
-  } | null>(defaultAddress);
+        const data = await getUserData(uuid);
+        if (data) {
+          const { default_address, address } = data;
 
-  const handleMarkDefault = (addressId: any) => {
-    // Find the address to make default
-    const addressToMakeDefault = addresses.find(addr => addr.id === addressId);
-    if (addressToMakeDefault) {
-      // Move current default to all addresses
-      const newAllAddresses = addresses.filter(addr => addr.id !== addressId);
-      if (defaultAddr) {
-        newAllAddresses.push({ ...defaultAddr, isDefault: false });
+          if (Array.isArray(address)) {
+            if (typeof default_address === 'number' && address[default_address]) {
+              setDefaultAddr(address[default_address]);
+              setDefaultAddressIndex(default_address);
+              const filteredAddresses = address.filter((_, i) => i !== default_address);
+              setAddress(filteredAddresses);
+            } else {
+              setDefaultAddr(null);
+              setDefaultAddressIndex(null);
+              setAddress(address);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching address:', error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    fetchAddress();
+  }, []);
+const handleMarkDefault = async (index: number) => {
+  try {
+    if (!uuid) {
+      console.error('User UUID is null');
+      return;
+    }
+
+    const data = await getUserData(uuid);
+    if (!data || !Array.isArray(data.address)) return;
+
+    const fullAddressList: Address[] = data.address;
+    const currentDefaultIndex: number | null = data.default_address ?? null;
+
+    // Calculate real index of the address being marked as default
+    let actualIndexInFullList = index;
+    if (currentDefaultIndex !== null && currentDefaultIndex <= index) {
+      actualIndexInFullList += 1;
+    }
+
+    await updateDefaultAddress(uuid, actualIndexInFullList);
+
+    // Update local state
+    const newDefaultAddr = address[index];
+    const updatedOtherAddresses = [...address];
+    updatedOtherAddresses.splice(index, 1);
+
+    if (currentDefaultIndex !== null && fullAddressList[currentDefaultIndex]) {
+      updatedOtherAddresses.push(fullAddressList[currentDefaultIndex]);
+    }
+
+    setDefaultAddr(newDefaultAddr);
+    setDefaultAddressIndex(actualIndexInFullList);
+    setAddress(updatedOtherAddresses);
+    Alert.alert('Success', 'Default address updated');
+  } catch (error) {
+    console.error('Failed to update default address:', error);
+  }
+};
+
+  const handleDelete = (index: number, isDefault = false) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this address?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (isDefault) {
+                if (uuid) {
+                  await updateDoc(doc(db, 'Users', uuid), {
+                    default_address: null,
+                  });
+                  setDefaultAddr(null);
+                  setDefaultAddressIndex(null);
+                } else {
+                  console.error('User UUID is null');
+                }
+              }
+
+                const updated = [...address];
+                updated.splice(index, 1);
+                if (uuid) {
+                  await deleteAddress(uuid, updated);
+                  setAddress(updated);
+                } else {
+                  console.error('User UUID is null');
+                }
+              Alert.alert('Success', 'Address deleted successfully');
+            } catch (error) {
+              console.error('Error deleting address:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  type Address = {
+    fullname: string;
+    mobile: string;
+    locality: string;
+    flatBuilding: string;
+    city: string;
+    landmark: string;
+    state: string;
+    pincode: string;
+    [key: string]: any;
+  };
+
+  const renderAddressCard = (address: Address, index: number, isDefaultSection = false) => (
+    <View key={index} style={styles.addressCard}>
+      <Text style={styles.nameText}>{address.fullname}</Text>
+      <Text style={styles.addressText}>{address.flatBuilding},{address.locality}</Text>
+      <Text style={styles.addressText}>{address.landmark}</Text>
+      <Text style={styles.addressText}>
+        {address.city}, {address.state} - {address.pincode}
+      </Text>
+
       
-      // Set new default
-      setDefaultAddr({ ...addressToMakeDefault, isDefault: true });
-      setAddresses(newAllAddresses);
-    }
-  };
-
-  const handleDelete = (addressId: any, isDefault = false) => {
-    if (isDefault) {
-      setDefaultAddr(null);
-    } else {
-      setAddresses(addresses.filter(addr => addr.id !== addressId));
-    }
-  };
-
-  const renderAddressCard = (address: any, isDefaultSection = false) => (
-    <View key={address.id} style={styles.addressCard}>
-      <Text style={styles.nameText}>{address.name}</Text>
-      <Text style={styles.addressText}>{address.address}</Text>
       <Text style={styles.mobileText}>
         Mobile : <Text style={{ fontWeight: 'bold' }}>{address.mobile}</Text>
       </Text>
-      
+
       <View style={styles.actionRow}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.actionBtn}
-          onPress={() => handleDelete(address.id, isDefaultSection)}
+          onPress={() => handleDelete(index, isDefaultSection)}
         >
           <Text style={styles.actionBtnText}>Delete</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionBtn}>
-          <Text style={styles.actionBtnText}>Edit</Text>
-        </TouchableOpacity>
-        
+<TouchableOpacity
+  style={styles.actionBtn}
+  onPress={() =>
+    router.push({
+      pathname: './EditAddress',
+      params: {
+        index: index.toString(), // Convert to string for navigation
+        // isDefault: isDefaultSection ? 'true' : 'false',
+      },
+    })
+  }
+>
+  <Text style={styles.actionBtnText}>Edit</Text>
+</TouchableOpacity>
+
         {!isDefaultSection && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionBtn}
-            onPress={() => handleMarkDefault(address.id)}
+            onPress={() => handleMarkDefault(index)}
           >
             <Text style={styles.actionBtnText}>Mark Default</Text>
           </TouchableOpacity>
@@ -93,53 +213,57 @@ export default function SavedAddressesScreen() {
   );
 
   const handleGoBack = () => {
-      router.back();
-    };  
+    router.back();
+  };
+
+  if (loading) return <Text>Loading...</Text>;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
-          </TouchableOpacity>
+          <Ionicons name="chevron-back" size={24} color="#000" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Saved Addresses</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.container}>
-        {/* Add New Address Button */}
-        <TouchableOpacity 
+        {/* Add New Address */}
+        <TouchableOpacity
           style={styles.addAddressButton}
-          onPress={() => router.push('./enter-address')}
+          onPress={() => router.push('./AddNewAddress')}
         >
           <Text style={styles.addAddressText}>ADD A NEW ADDRESS</Text>
         </TouchableOpacity>
 
-        {/* Default Address Section */}
-        {defaultAddr && (
+        {defaultAddr && defaultAddressIndex !== null && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Default Address</Text>
-            {renderAddressCard(defaultAddr, true)}
+            {renderAddressCard(defaultAddr, defaultAddressIndex, true)}
           </View>
         )}
 
-        {/* All Addresses Section */}
-        {addresses.length > 0 && (
+        {/* All Other Addresses */}
+        {address.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>All Address</Text>
-            {addresses.map(address => renderAddressCard(address, false))}
+            {address.map((address, index) =>
+              renderAddressCard(address, index, false)
+            )}
           </View>
         )}
       </ScrollView>
 
       {/* Update Button */}
-      <TouchableOpacity style={styles.updateBtn}>
+      {/* <TouchableOpacity style={styles.updateBtn}>
         <Text style={styles.updateBtnText}>UPDATE</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   header: {
