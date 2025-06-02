@@ -1,242 +1,227 @@
-// import React, { useEffect, useState } from "react";
-// import { Alert, Platform, TextInput, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-// import * as Location from "expo-location";
-// import MapView, { Marker } from "react-native-maps";
-// import { useRouter } from "expo-router";
-// import { useFonts, OpenSans_400Regular, OpenSans_700Bold } from "@expo-google-fonts/open-sans";
-// import { StyleSheet } from "react-native";
-// import { useLocationStore } from "./store/useLocationStore"; // Import global store
-// import { getCurrentUserUUID } from './auth-helper'; // Import helper function to get current user UUID
-// import { doc, setDoc } from "firebase/firestore";
-// import { db } from "../firebaseConfig"; // Adjust path as needed
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import MapView, { Marker, Region } from 'react-native-maps';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 
-// export default function LocationScreen({ onLocationSelected }) {
-//   const router = useRouter();
+export default function LocationScreen() {
+  const router = useRouter();
+  const [location, setLocation] = useState<Region | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [addressData, setAddressData] = useState({
+    street: '',
+    city: '',
+    region: '',
+    postalCode: '',
+    country: '',
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
 
-//   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [addressData, setAddressData] = useState({
-//     street: "",
-//     city: "",
-//     region: "",
-//     postalCode: "",
-//     country: "",
-//   });
-//   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Location access is required.');
+        setLoading(false);
+        return;
+      }
 
-//   useEffect(() => {
-//     (async () => {
-//       try {
-//         let { status } = await Location.requestForegroundPermissionsAsync();
-//         if (status !== "granted") {
-//           Alert.alert("Permission denied", "Location access is required.");
-//           setLoading(false);
-//           return;
-//         }
+      const loc = await Location.getCurrentPositionAsync({});
+      const region = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
 
-//         let currentLocation = await Location.getCurrentPositionAsync({});
-//         setLocation(currentLocation);
+      setLocation(region);
+      setMarkerPosition({ latitude: region.latitude, longitude: region.longitude });
 
-//         await updateAddressFields(currentLocation.coords);
+      await updateAddressFields(loc.coords);
+      setLoading(false);
+    })();
+  }, []);
 
-//         setLoading(false);
-//       } catch (error) {
-//         Alert.alert("Error", "Could not fetch location.");
-//         setLoading(false);
-//       }
-//     })();
-//   }, []);
+  const updateAddressFields = async (coords: { latitude: number; longitude: number }) => {
+    try {
+      const [locationAddress] = await Location.reverseGeocodeAsync(coords);
+      if (locationAddress) {
+        setAddressData({
+          street: locationAddress.street || '',
+          city: locationAddress.city || '',
+          region: locationAddress.region || '',
+          postalCode: locationAddress.postalCode || '',
+          country: locationAddress.country || '',
+        });
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get address from coordinates');
+    }
+  };
 
-//   async function updateAddressFields(coords) {
-//     try {
-//       const [locationAddress] = await Location.reverseGeocodeAsync(coords);
+  const handleRegionChangeComplete = (region: Region) => {
+    const coords = {
+      latitude: region.latitude,
+      longitude: region.longitude,
+    };
+    setMarkerPosition(coords);
+    updateAddressFields(coords);
+  };
 
-//       if (locationAddress) {
-//         setAddressData({
-//           street: locationAddress.street || "",
-//           city: locationAddress.city || "",
-//           region: locationAddress.region || "",
-//           postalCode: locationAddress.postalCode || "",
-//           country: locationAddress.country || "",
-//         });
-//       }
-//     } catch {
-//       Alert.alert("Error", "Failed to get address from coordinates");
-//     }
-//   }
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    try {
+      const geocoded = await Location.geocodeAsync(searchQuery);
+      if (geocoded.length > 0) {
+        const { latitude, longitude } = geocoded[0];
+        const region = {
+          latitude,
+          longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        };
+        setLocation(region);
+        setMarkerPosition({ latitude, longitude });
+        await updateAddressFields({ latitude, longitude });
+      } else {
+        Alert.alert('Location not found', 'Try a different search.');
+      }
+    } catch {
+      Alert.alert('Error', 'Could not perform geocoding.');
+    }
+  };
 
-//   const handleSearch = async () => {
-//     if (!searchQuery.trim()) return;
+  const handleConfirmLocation = () => {
+    if (!markerPosition) {
+      Alert.alert('Location not available', 'Please try again.');
+      return;
+    }
 
-//     try {
-//       const geocodedLocations = await Location.geocodeAsync(searchQuery);
-//       if (geocodedLocations.length > 0) {
-//         const coords = geocodedLocations[0];
-//         setLocation({ coords });
-//         await updateAddressFields(coords);
-//       } else {
-//         Alert.alert("Location not found", "Try a different search.");
-//       }
-//     } catch {
-//       Alert.alert("Error", "Could not perform geocoding.");
-//     }
-//   };
+    const formAddress = {
+      fullAddress: `${addressData.street}, ${addressData.city}, ${addressData.region}, ${addressData.postalCode}, ${addressData.country}`,
+      pincode: addressData.postalCode,
+      state: addressData.region,
+      city: addressData.city,
+      locality: addressData.street,
+      latitude: markerPosition.latitude,
+      longitude: markerPosition.longitude,
+    };
 
-//   const handleDragEnd = async (e) => {
-//     const coords = e.nativeEvent.coordinate;
-//     setLocation({ coords });
-//     await updateAddressFields(coords);
-//   };
+    router.push({
+      pathname: '/AddNewAddress',
+      params: {
+        pincode: formAddress.pincode,
+        state: formAddress.state,
+        city: formAddress.city,
+        locality: formAddress.locality,
+        latitude: formAddress.latitude.toString(),
+        longitude: formAddress.longitude.toString(),
+      },
+    });
 
-//   const handleUseCurrentLocation = () => {
-//     if (!location) {
-//       Alert.alert("Location not available", "Please try again.");
-//       return;
-//     }
+    console.log('Navigating with address:', formAddress);
+  };
 
-//     // Prepare data to send back
-//     const formAddress = {
-//       fullAddress: `${addressData.street}, ${addressData.city}, ${addressData.region}, ${addressData.postalCode}, ${addressData.country}`,
-//       pincode: addressData.postalCode,
-//       state: addressData.region,
-//       city: addressData.city,
-//       locality: addressData.street,
-//       latitude: location.coords.latitude,
-//       longitude: location.coords.longitude,
-//     };
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
-//     // You can either:
-//     // 1) Pass back via callback prop if using a component: onLocationSelected(formAddress)
-//     // 2) Or navigate back with params (if using navigation)
-//     // Here, example with router params:
-//     router.back(); 
-//     // Implement your logic to send this data back to your form screen
+  return (
+    <View style={styles.container}>
+      <TextInput
+        placeholder="Search for a location"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onSubmitEditing={handleSearch}
+        style={styles.searchInput}
+      />
 
-//     console.log("Selected Location for Form:", formAddress);
-//   };
+      {location && (
+        <MapView
+          style={styles.map}
+          initialRegion={location}
+          onRegionChangeComplete={handleRegionChangeComplete}
+          showsUserLocation
+        >
+          {markerPosition && (
+            <Marker
+              coordinate={markerPosition}
+              draggable
+              onDragEnd={(e) => {
+                const coords = e.nativeEvent.coordinate;
+                setMarkerPosition(coords);
+                updateAddressFields(coords);
+              }}
+            />
+          )}
+        </MapView>
+      )}
 
-//   if (loading) {
-//     return (
-//       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-//         <ActivityIndicator size="large" />
-//         <Text>Loading...</Text>
-//       </View>
-//     );
-//   }
+      <View style={styles.addressBox}>
+        <Text style={styles.addressText}>
+          {`${addressData.street}, ${addressData.city}, ${addressData.region}, ${addressData.postalCode}`}
+        </Text>
+      </View>
 
-//   return (
-//     <View style={{ flex: 1 }}>
-//       <TextInput
-//         placeholder="Search location"
-//         value={searchQuery}
-//         onChangeText={setSearchQuery}
-//         onSubmitEditing={handleSearch}
-//         style={{ /* your existing search input style */ }}
-//       />
+      <TouchableOpacity onPress={handleConfirmLocation} style={styles.confirmButton}>
+        <Text style={styles.buttonText}>Use this location</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
-//       {Platform.OS !== "web" && location && (
-//         <MapView
-//           style={{ flex: 1 }}
-//           region={{
-//             latitude: location.coords.latitude,
-//             longitude: location.coords.longitude,
-//             latitudeDelta: 0.005,
-//             longitudeDelta: 0.005,
-//           }}
-//           showsUserLocation
-//         >
-//           <Marker
-//             coordinate={{
-//               latitude: location.coords.latitude,
-//               longitude: location.coords.longitude,
-//             }}
-//             draggable
-//             onDragEnd={handleDragEnd}
-//           />
-//         </MapView>
-//       )}
-
-//       <Text>{`${addressData.street}, ${addressData.city}, ${addressData.region}, ${addressData.postalCode}`}</Text>
-
-//       <TouchableOpacity onPress={handleUseCurrentLocation} style={{ /* your existing button styles */ }}>
-//         <Text>Use this location</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// }
-
-
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//     alignItems: "center",
-//     justifyContent: "flex-end",
-//   },
-//   loadingContainer: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   map: {
-//     ...StyleSheet.absoluteFillObject,
-//   },
-//   pin: {
-//     width: 50,
-//     height: 50,
-//     resizeMode: "contain",
-//     position: "absolute",
-//     top: "45%",
-//     alignSelf: "center",
-//   },
-//   searchInput: {
-//     width: "90%",
-//     padding: 10,
-//     backgroundColor: "#f1f1f1",
-//     borderRadius: 5,
-//     marginTop: 20,
-//     fontFamily: "OpenSans_400Regular",
-//   },
-//   question: {
-//     fontFamily: "OpenSans_400Regular",
-//     fontSize: 16,
-//     marginBottom: 10,
-//     backgroundColor: "#fff",
-//     paddingHorizontal: 10,
-//   },
-//   addressText: {
-//     fontFamily: "OpenSans_400Regular",
-//     fontSize: 14,
-//     marginBottom: 20,
-//     backgroundColor: "#fff",
-//     paddingHorizontal: 10,
-//     textAlign: "center",
-//   },
-//   currentLocationButton: {
-//     backgroundColor: "#000",
-//     width: "90%",
-//     paddingVertical: 15,
-//     borderRadius: 10,
-//     alignItems: "center",
-//     marginBottom: 10,
-//   },
-//   currentLocationText: {
-//     color: "#fff",
-//     fontFamily: "OpenSans_700Bold",
-//     fontSize: 16,
-//   },
-//   manualLocationButton: {
-//     backgroundColor: "#E5E5E5",
-//     width: "90%",
-//     paddingVertical: 15,
-//     borderRadius: 10,
-//     alignItems: "center",
-//     marginBottom: 30,
-//   },
-//   manualLocationText: {
-//     color: "#000",
-//     fontFamily: "OpenSans_700Bold",
-//     fontSize: 16,
-//   },
-// });
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  searchInput: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    margin: 10,
+    borderRadius: 8,
+    fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addressBox: {
+    padding: 12,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+  },
+  addressText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  confirmButton: {
+    backgroundColor: '#000',
+    paddingVertical: 14,
+    margin: 20,
+    borderRadius: 30,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

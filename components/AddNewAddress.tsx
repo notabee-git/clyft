@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert, } from 'react-native';
 import { Ionicons, Feather, AntDesign } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {db, doc, getDoc, updateDoc } from '../firebaseConfig';
 import { getCurrentUserUUID } from './auth-helper';
+import { useLocalSearchParams } from "expo-router";
 
 
 type AddressType = 'Home' | 'Office' | 'Site' | 'Other';
@@ -22,6 +23,10 @@ interface AddressFormData {
   isDefault: boolean;
 }
 
+
+
+
+
 const AddressForm: React.FC = () => {
   const [formData, setFormData] = useState<AddressFormData>({
     fullName: '',
@@ -35,6 +40,20 @@ const AddressForm: React.FC = () => {
     addressType: 'Home',
     isDefault: false
   });
+  const params = useLocalSearchParams();
+
+    useEffect(() => {
+      if (params && (params.pincode || params.city || params.state || params.locality)) {
+        setFormData((prev) => ({
+          ...prev,
+          pincode: typeof params.pincode === "string" ? params.pincode : "",
+          state: typeof params.state === "string" ? params.state : "",
+          city: typeof params.city === "string" ? params.city : "",
+          locality: typeof params.locality === "string" ? params.locality : "",
+        }));
+      }
+    }, []);
+
 
   const [errors, setErrors] = useState<Partial<Record<keyof AddressFormData, string>>>({});
 
@@ -70,20 +89,10 @@ const AddressForm: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+const handleUseLocation = () => {
 
-  const handleUseLocation = () => {
-    // In a real app, this would use device location services
-    Alert.alert('Location Service', 'Getting your current location...');
-    // Mock location data for demonstration
-    setTimeout(() => {
-      setFormData({
-        ...formData,
-        pincode: '400001',
-        state: 'Maharashtra',
-        city: 'Mumbai'
-      });
-    }, 1000);
-  };
+  router.push("/Location_page_address"); // Replace with your actual route if different
+};
 
 
 const handleSaveAddress = async () => {
@@ -137,7 +146,8 @@ const handleSaveAddress = async () => {
 
       console.log('Address saved:', newAddress);
       Alert.alert('Success', 'Address saved successfully!');
-      router.back();
+      //route to saved address
+      router.push("/Saved-Address");
 
     } catch (error) {
       console.error('Error saving address:', error);
