@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-import { CartItem, WideItemFb, Variant, PriceTier } from '@/constants/types';
+import { CartItem, WideItemFb, Variant, PriceTier,Address } from '@/constants/types';
 
 
 
@@ -14,6 +14,8 @@ interface CartContextType {
   decrementItem: (productName: string, variantIndex: number) => void;
   clearCart: () => void;
   totalAmount: number;
+  address: Address | null;
+  setAddress: (addr: Address | null) => void;
 }
 
 // Context setup
@@ -33,7 +35,7 @@ const getSlabPrice = (variant: Variant, quantity: number): number => {
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-
+  const [address, setAddress] = useState<Address | null>(null);
 const addToCart = (item: { product: WideItemFb; variantIndex: number; quantity?: number; }) => {
   const quantity = item.quantity ?? 1;
   const variant = item.product.variants[item.variantIndex];
@@ -110,7 +112,7 @@ const addToCart = (item: { product: WideItemFb; variantIndex: number; quantity?:
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, incrementItem, decrementItem, clearCart, totalAmount }}
+      value={{ cart, addToCart, incrementItem, decrementItem, clearCart, totalAmount, address, setAddress }}
     >
       {children}
     </CartContext.Provider>

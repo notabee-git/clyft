@@ -6,24 +6,14 @@ import { useRouter } from 'expo-router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig'; // Adjust path as needed
-
-type Address = {
-  name: string;
-  number: string;
-  street: string;
-  area: string;
-  city: string;
-  state: string;
-  pincode: string;
-};
-
-
+import { Address } from '@/constants/types';
+import { useCart } from '@/context/cartContext'; // Assuming you have a cart context
 export default function SelectAddressScreen() {
   const router = useRouter();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-
+  const {cart, address, setAddress} = useCart();
 
   useEffect(() => {
     const auth = getAuth();
@@ -44,6 +34,7 @@ export default function SelectAddressScreen() {
             const defaultAddressIndex = userData.default_address ?? 0;
             if (fetchedAddresses.length > 0) {
               setSelectedId(defaultAddressIndex);
+              setAddress(fetchedAddresses[defaultAddressIndex]);
             }
           } else {
             console.log('No such user document!');
@@ -70,20 +61,22 @@ export default function SelectAddressScreen() {
       const isSelected = selectedId === index;
 
       // Construct full address string
-      const fullAddress = `${item.street}\n${item.area}\n${item.city}, ${item.state}, ${item.pincode}`;
+      const fullAddress = `${item.flatBuilding}\n${item.locality}\n${item.city}, ${item.state}, ${item.pincode}`;
 
       return (
         <View key={index} style={styles.addressBox}>
           <TouchableOpacity
             style={styles.radioRow}
-            onPress={() => setSelectedId(index)}
+            onPress={() => {
+              setSelectedId(index),setAddress(item)}
+            }
             activeOpacity={0.7}
           >
             <View style={styles.radioOuter}>
               {isSelected && <View style={styles.radioInner} />}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.nameText}>{item.name}</Text>
+              <Text style={styles.nameText}>{item.fullname}</Text>
               <Text style={styles.addressText}>{fullAddress}</Text>
               {/* <Text style={styles.mobileText}>
                 Mobile : <Text style={{ fontWeight: 'bold' }}>{item.number}</Text>
@@ -130,7 +123,7 @@ export default function SelectAddressScreen() {
       {/* Add New Address Button */}
       <TouchableOpacity
         style={styles.addAddressButton}
-        onPress={() => router.push('./enter-address')}
+        onPress={() => router.push('./AddNewAddress')}
       >
         <Text style={styles.addAddressText}>ADD A NEW ADDRESS</Text>
       </TouchableOpacity>
@@ -138,7 +131,7 @@ export default function SelectAddressScreen() {
       <ScrollView>{renderAddresses()}</ScrollView>
 
       {/* Deliver Here Button */}
-      <TouchableOpacity style={styles.deliverBtn}>
+      <TouchableOpacity style={styles.deliverBtn} onPress={() => {router.push('/Delivery_estimate');}}>
         <Text style={styles.deliverBtnText}>DELIVER HERE</Text>
       </TouchableOpacity>
     </SafeAreaView>

@@ -33,10 +33,10 @@ export default function SavedAddressScreen() {
   const [defaultAddressIndex, setDefaultAddressIndex] = useState<number | null>(null);
   const [address, setAddress] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
-  const uuid = getCurrentUserUUID();
 
   useEffect(() => {
     const fetchAddress = async () => {
+      const uuid = await getCurrentUserUUID();
       try {
         if (!uuid) {
           setLoading(false);
@@ -70,6 +70,7 @@ export default function SavedAddressScreen() {
     fetchAddress();
   }, []);
 const handleMarkDefault = async (index: number) => {
+  const uuid = await getCurrentUserUUID();
   try {
     if (!uuid) {
       console.error('User UUID is null');
@@ -121,6 +122,7 @@ const handleMarkDefault = async (index: number) => {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            const uuid = await getCurrentUserUUID();
             try {
               if (isDefault) {
                 if (uuid) {

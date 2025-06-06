@@ -97,7 +97,7 @@ const handleUseLocation = () => {
 
 const handleSaveAddress = async () => {
   if (validateForm()) {
-    const uuid = getCurrentUserUUID();
+    const uuid = await getCurrentUserUUID();
     console.log('Current User UUID:', uuid);
     if (!uuid) {
       Alert.alert('Error', 'User ID not found.');

@@ -45,7 +45,7 @@ const EditAddress: React.FC = () => {
 
   useEffect(() => {
     const loadAddress = async () => {
-      const uuid = getCurrentUserUUID();
+      const uuid = await getCurrentUserUUID();
       if (!uuid) return;
 
       const userSnap = await getDoc(doc(db, 'Users', uuid));
@@ -114,7 +114,7 @@ const EditAddress: React.FC = () => {
       return;
     }
 
-    const uuid = getCurrentUserUUID();
+    const uuid = await getCurrentUserUUID();
     if (!uuid) {
       Alert.alert('Error', 'User not found.');
       return;

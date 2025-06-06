@@ -1,23 +1,29 @@
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { CartItem } from '@/constants/types';
+import { CartItem,Address } from '@/constants/types';
 
 const db = getFirestore();
 
-export async function placeOrder(cart: CartItem[], userId: string, address: string = "Hitech City") {
+export async function placeOrder(cart: CartItem[], userId: string, address: Address) {
+  
   try {
     for (const item of cart) {
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
       const orderData = {
+        Address: address,
+        GST:18,
         OrderID: orderId,
-        userId,
-        name: item.product.name,
+        UUID:userId,
+        createdAt: serverTimestamp(),
+        delivery_date:serverTimestamp(),
+        delivery_fee: 20,
+        item: item.product.name,
         price: item.price,
         quantity: item.quantity.toString(),
-        total: item.price * item.quantity,
+        size: item.product.variants[item.variantIndex].size,
         status: "pending",
-        createdAt: serverTimestamp(),
-        Address: address,
+        total: item.price * item.quantity,
+        variant: item.variantIndex,
       };
 
       const docRef = await addDoc(collection(db, "orders"), orderData);
