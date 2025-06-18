@@ -12,7 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Define the screen names as a union type for type safety
-type ScreenName = '/orders' | '/Saved-Address' | '/profile' | '/help-and-support' | '/refunds' | '/paymentSettings' | '/clyftCash' | '/wallet' | '/rewards' | '/giftCards' | '/referEarn' | '/GSTDetails' | '/AboutUs' | '/FAQs' | '/Terms';
+type ScreenName = '/your-orders' | '/Saved-Address' | '/profile' | '/help-and-support' | '/refunds' | '/paymentSettings' | '/clyftCash' | '/wallet' | '/rewards' | '/giftCards' | '/referEarn' | '/GSTDetails' | '/AboutUs' | '/FAQs' | '/Terms';
 
 type FeatherIconName = keyof typeof Feather.glyphMap;
 
@@ -205,7 +205,7 @@ export default function AccountScreen() {
 
   // Menu items for "Your Information" - now with proper typing
   const yourInfoItems: { icon: FeatherIconName; text: string; route: ScreenName }[] = [
-    { icon: 'package', text: 'Your Orders', route: '/orders' },
+    { icon: 'package', text: 'Your Orders', route: '/your-orders' },
     { icon: 'map-pin', text: 'Saved Addresses', route: '/Saved-Address' },
     { icon: 'user', text: 'Profile', route: '/profile' },
     { icon: 'headphones', text: 'Help & Support', route: '/help-and-support' },
@@ -298,7 +298,7 @@ export default function AccountScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/orders')}>
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/your-orders')}>
             <Ionicons name="document-text-outline" size={24} color="#333" />
             <Text style={styles.actionText}>Your {'\n'}Orders</Text>
           </TouchableOpacity>

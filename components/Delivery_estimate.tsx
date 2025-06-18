@@ -5,30 +5,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-
+import { Address } from '@/constants/types';
 import { useCart } from '@/context/cartContext';
 
 export default function EstimateScreen() {
   const router = useRouter();
-  const [address, setAddress] = useState<any | null>(null);
+  const [temp_address, settempAddress] = useState<Address | null>(null);
   const [loading, setLoading] = useState(true);
-  const { cart } = useCart();
-
+  const { cart, address, setAddress } = useCart();
+  
   const db = getFirestore();
   const auth = getAuth();
 
-  const deliveryItems = [
-    {
-      image: require('../assets/cement.png'),
-      estimatedDelivery: '15 Apr 2025',
-    },
-    {
-      image: require('../assets/cement.png'),
-      estimatedDelivery: '15 Apr 2025',
-    },
-  ];
-
   useEffect(() => {
+    if (address) {
+      settempAddress(address);
+      setLoading(false);
+      return;
+    }
     const fetchUserAddress = async () => {
       try {
         const user = auth.currentUser;
@@ -39,20 +33,12 @@ export default function EstimateScreen() {
 
         const userDocRef = doc(db, 'Users', user.uid);
         const docSnap = await getDoc(userDocRef);
-
         if (docSnap.exists()) {
           const userData = docSnap.data();
-          setAddress({
-            name: userData.name || '',
-            mobile: userData.number || '',
-            addressLines: userData.address?.[0]
-              ? [
-                  userData.address[0].street || '',
-                  userData.address[0].area || '',
-                  `${userData.address[0].city || ''}, ${userData.address[0].state || ''}, ${userData.address[0].pincode || ''}`,
-                ]
-              : [],
-          });
+          const addressinfo = userData.address[0] || [];
+          console.log('Fetched address:', addressinfo);
+          setAddress(addressinfo);
+          settempAddress(addressinfo);
         } else {
           console.log('User document does not exist');
         }
@@ -99,6 +85,7 @@ export default function EstimateScreen() {
 
         {/* Address Block */}
         <View style={styles.addressListContainer}>
+<<<<<<< HEAD
           <View style={styles.addressDetailsContainer}>
             <View style={styles.addressHeaderRow}>
               <Text style={styles.addressName}>{address?.name}</Text>
@@ -115,6 +102,38 @@ export default function EstimateScreen() {
             </View>
           </View>
         </View>
+=======
+  <View style={styles.addressDetailsContainer}>
+    <View style={styles.addressHeaderRow}>
+      <Text style={styles.addressName}>{temp_address?.fullname}</Text>
+      <TouchableOpacity onPress={() => router.push('/Select_address')}>
+        <Text style={styles.changeButton}>Change</Text>
+      </TouchableOpacity>
+    </View>
+
+    {/* Display full address lines */}
+    <Text style={styles.addressLine}>{temp_address?.flatBuilding}</Text>
+    <Text style={styles.addressLine}>{temp_address?.locality}</Text>
+    <Text style={styles.addressLine}>{`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}</Text>
+
+    {/* Optional landmark if present */}
+    {temp_address?.landmark ? (
+      <Text style={styles.addressLine}>Landmark: {temp_address.landmark}</Text>
+    ) : null}
+
+    {/* Address Type (like Home / Site) */}
+    {temp_address?.addressType ? (
+      <Text style={styles.addressLine}>Type: {temp_address.addressType}</Text>
+    ) : null}
+
+    {/* Mobile number */}
+    <View style={styles.mobileContainer}>
+      <Text style={styles.mobileLabel}>Mobile: </Text>
+      <Text style={styles.mobileNumber}>{temp_address?.mobile}</Text>
+    </View>
+  </View>
+</View>
+>>>>>>> 5b0922eeb021dec8d403c28e351fdeaa98f2bc1e
 
         <View style={styles.cardSeparator} />
 

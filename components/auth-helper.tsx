@@ -1,12 +1,20 @@
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 /**
- * Returns the current user's UUID (Firebase UID) if logged in.
- * @returns string | null
+ * Waits until Firebase Auth is initialized and returns the current user's UUID.
+ * @returns Promise<string | null>
  */
-export const getCurrentUserUUID = (): string | null => {
+export const getCurrentUserUUID = async (): Promise<string | null> => {
   const auth = getAuth();
-  const user = auth.currentUser;
 
-  return user ? user.uid : null;
+  if (auth.currentUser) {
+    return auth.currentUser.uid;
+  }
+
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe(); // clean up listener
+      resolve(user?.uid ?? null);
+    });
+  });
 };

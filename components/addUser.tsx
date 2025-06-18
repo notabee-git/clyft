@@ -47,13 +47,7 @@ export const checkAndCreateUser = async () => {
         dateOfBirth: '',
         currentLocation: '',
         address: [
-          {
-            area: '',
-            city: '',
-            pincode: 0,
-            state: '',
-            street: '',
-          },
+          
         ],
       };
 
