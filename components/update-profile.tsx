@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { useUser } from '../context/userContext';
+import { doc, getDoc, setDoc, getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { useEffect } from 'react';
+
 
 interface ProfileData {
   firstName: string;
@@ -18,19 +21,56 @@ interface ProfileData {
 
 export default function UpdateProfileScreen() {
 
-  const { user, updateUserProfile } = useUser();
+
+  const auth = getAuth();
+  const db = getFirestore();
+  const router = useRouter();
+
 
   const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    contactNo: user?.contact || '',
-    dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
-    gender: user?.gender || 'Male',
+    firstName: '',
+    lastName: '',
+    email: '',
+    contactNo: '',
+    dateOfBirth: new Date(),
+    gender: 'Male',
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null); 
+
+
+  useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const userRef = doc(db, 'Users', currentUser.uid);
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+
+        setProfileData({
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          email: userData.email || '',
+          contactNo: userData.contact || '',
+          dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : new Date(),
+          gender: userData.gender || 'Male',
+        });
+      } else {
+        console.log('No user document found');
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+    }
+  };
+
+  fetchUserData();
+}, []);
+  
 
   const handleContactNumberChange = (text: string) => {
     const numericText = text.replace(/[^0-9]/g, '');
@@ -69,15 +109,19 @@ export default function UpdateProfileScreen() {
       return;
     }
 
-    try {
-      await updateUserProfile({
+     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
+
+      const userRef = doc(db, 'Users', currentUser.uid);
+      await setDoc(userRef, {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         email: profileData.email,
         contact: profileData.contactNo,
         gender: profileData.gender,
         dateOfBirth: profileData.dateOfBirth.toISOString(),
-      });
+      }, { merge: true });
 
       Alert.alert('Success', 'Profile updated successfully', [
         { text: 'OK', onPress: () => router.back() },
@@ -111,7 +155,7 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('firstName', text)}
             onFocus={() => setFocusedField('firstName')}
             onBlur={() => setFocusedField(null)}
-            placeholder={user?.firstName || "Enter first name"}
+            placeholder={"Enter first name"}
           />
         </View>
 
@@ -127,7 +171,7 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('lastName', text)}
             onFocus={() => setFocusedField('lastName')}
             onBlur={() => setFocusedField(null)}
-            placeholder={user?.lastName || "Enter first name"}
+            placeholder={"Enter first name"}
           />
         </View>
 
@@ -143,7 +187,7 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('email', text)}
             onFocus={() => setFocusedField('email')}
             onBlur={() => setFocusedField(null)}
-            placeholder={user?.email || "Enter email address"}
+            placeholder={"Enter email address"}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -162,7 +206,7 @@ export default function UpdateProfileScreen() {
             onChangeText={(text) => handleInputChange('contactNo', text)}
             onFocus={() => setFocusedField('contactNo')}
             onBlur={() => setFocusedField(null)}
-            placeholder={user?.contact || "Enter contact number"}
+            placeholder={ "Enter contact number"}
             keyboardType="numeric"
             maxLength={13}
           />

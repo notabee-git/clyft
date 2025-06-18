@@ -111,7 +111,7 @@ export default function EstimateScreen() {
             ))}
             <View style={styles.mobileContainer}>
               <Text style={styles.mobileLabel}>Mobile: </Text>
-              <Text style={styles.mobileNumber}>{address?.mobile}</Text>
+              <Text style={styles.mobileNumber}>{address?.contact}</Text>
             </View>
           </View>
         </View>

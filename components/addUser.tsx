@@ -43,6 +43,9 @@ export const checkAndCreateUser = async () => {
         email: user.email,
         contact: user.phoneNumber, // Replace with actual number from user input
         password: '12345678', // ⚠️ Avoid storing raw passwords in production
+        gender: '',
+        dateOfBirth: '',
+        currentLocation: '',
         address: [
           {
             area: '',

@@ -33,7 +33,6 @@ export default function RootLayout() {
   
   return (
     <SafeAreaProvider>
-      <UserProvider>
         <CartProvider>
               <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                 <Stack>
@@ -44,7 +43,6 @@ export default function RootLayout() {
 
               </ThemeProvider>
         </CartProvider>
-      </UserProvider>
     </SafeAreaProvider>
 
   );
