@@ -85,6 +85,24 @@ export default function EstimateScreen() {
 
         {/* Address Block */}
         <View style={styles.addressListContainer}>
+<<<<<<< HEAD
+          <View style={styles.addressDetailsContainer}>
+            <View style={styles.addressHeaderRow}>
+              <Text style={styles.addressName}>{address?.name}</Text>
+              <TouchableOpacity onPress={() => router.push('/Select_address')}>
+                <Text style={styles.changeButton}>Change</Text>
+              </TouchableOpacity>
+            </View>
+            {address?.addressLines?.map((line: string, idx: number) => (
+              <Text key={idx} style={styles.addressLine}>{line}</Text>
+            ))}
+            <View style={styles.mobileContainer}>
+              <Text style={styles.mobileLabel}>Mobile: </Text>
+              <Text style={styles.mobileNumber}>{address?.contact}</Text>
+            </View>
+          </View>
+        </View>
+=======
   <View style={styles.addressDetailsContainer}>
     <View style={styles.addressHeaderRow}>
       <Text style={styles.addressName}>{temp_address?.fullname}</Text>
@@ -115,6 +133,7 @@ export default function EstimateScreen() {
     </View>
   </View>
 </View>
+>>>>>>> 5b0922eeb021dec8d403c28e351fdeaa98f2bc1e
 
         <View style={styles.cardSeparator} />
 
