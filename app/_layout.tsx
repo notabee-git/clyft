@@ -5,12 +5,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
+import 'react-native-get-random-values';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CartProvider } from '../context/cartContext'; // Adjust the path if needed
-import { UserProvider } from '@/context/userContext';
+
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
