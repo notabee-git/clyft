@@ -1,23 +1,20 @@
-import 'react-native-get-random-values'; // Must be first
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Alert,
   ActivityIndicator,
+  TextInput,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
-import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { GOOGLE_PLACES_API_KEY } from '@env';
 
 export default function LocationScreen() {
   const router = useRouter();
-  const mapRef = useRef<MapView>(null);
-
   const [location, setLocation] = useState<Region | null>(null);
   const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
   const [addressData, setAddressData] = useState({
@@ -27,6 +24,7 @@ export default function LocationScreen() {
     postalCode: '',
     country: '',
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,6 +46,7 @@ export default function LocationScreen() {
 
       setLocation(region);
       setMarkerPosition({ latitude: region.latitude, longitude: region.longitude });
+
       await updateAddressFields(loc.coords);
       setLoading(false);
     })();
@@ -79,6 +78,29 @@ export default function LocationScreen() {
     updateAddressFields(coords);
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    try {
+      const geocoded = await Location.geocodeAsync(searchQuery);
+      if (geocoded.length > 0) {
+        const { latitude, longitude } = geocoded[0];
+        const region = {
+          latitude,
+          longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        };
+        setLocation(region);
+        setMarkerPosition({ latitude, longitude });
+        await updateAddressFields({ latitude, longitude });
+      } else {
+        Alert.alert('Location not found', 'Try a different search.');
+      }
+    } catch {
+      Alert.alert('Error', 'Could not perform geocoding.');
+    }
+  };
+
   const handleConfirmLocation = () => {
     if (!markerPosition) {
       Alert.alert('Location not available', 'Please try again.');
@@ -102,10 +124,12 @@ export default function LocationScreen() {
         state: formAddress.state,
         city: formAddress.city,
         locality: formAddress.locality,
-        latitude: formAddress.latitude,
-        longitude: formAddress.longitude,
+        latitude: formAddress.latitude.toString(),
+        longitude: formAddress.longitude.toString(),
       },
     });
+
+    console.log('Navigating with address:', formAddress);
   };
 
   if (loading) {
@@ -119,58 +143,20 @@ export default function LocationScreen() {
 
   return (
     <View style={styles.container}>
-      <GooglePlacesAutocomplete
+      <TextInput
         placeholder="Search for a location"
-        fetchDetails={true}
-        onPress={(data, details = null) => {
-          if (details?.geometry?.location) {
-            const { lat, lng } = details.geometry.location;
-            const region = {
-              latitude: lat,
-              longitude: lng,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            };
-
-            setLocation(region);
-            setMarkerPosition({ latitude: lat, longitude: lng });
-            updateAddressFields({ latitude: lat, longitude: lng });
-
-            // Animate map to the new region
-            mapRef.current?.animateToRegion(region, 1000);
-          }
-        }}
-        query={{
-          key: GOOGLE_PLACES_API_KEY,
-          language: 'en',
-        }}
-        styles={{
-          container: {
-            position: 'absolute',
-            width: '100%',
-            zIndex: 1,
-          },
-          textInput: {
-            backgroundColor: '#f0f0f0',
-            margin: 10,
-            borderRadius: 8,
-            paddingHorizontal: 15,
-            fontSize: 16,
-          },
-        }}
-        enablePoweredByContainer={false}
-        nearbyPlacesAPI="GooglePlacesSearch"
-        debounce={300}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onSubmitEditing={handleSearch}
+        style={styles.searchInput}
       />
 
       {location && (
         <MapView
-          ref={mapRef}
           style={styles.map}
           initialRegion={location}
           onRegionChangeComplete={handleRegionChangeComplete}
           showsUserLocation
-          provider={PROVIDER_GOOGLE}
         >
           {markerPosition && (
             <Marker
@@ -200,13 +186,14 @@ export default function LocationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  map: {
-    flex: 1,
-    zIndex: 0,
+  container: { flex: 1 },
+  map: { flex: 1 },
+  searchInput: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    margin: 10,
+    borderRadius: 8,
+    fontSize: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -214,38 +201,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addressBox: {
-    padding: 16,
-    backgroundColor: '#ffffff',
+    padding: 12,
+    backgroundColor: '#fff',
     alignItems: 'center',
-    borderTopWidth: 0.5,
-    borderColor: '#ccc',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 4,
-    elevation: 3,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
   },
   addressText: {
-    fontSize: 15,
-    color: '#444',
+    fontSize: 16,
+    color: '#333',
     textAlign: 'center',
-    fontWeight: '500',
   },
   confirmButton: {
-    backgroundColor: '#1e1e1e',
+    backgroundColor: '#000',
     paddingVertical: 14,
-    marginHorizontal: 20,
-    marginVertical: 10,
-    borderRadius: 25,
+    margin: 20,
+    borderRadius: 30,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 4,
   },
   buttonText: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
