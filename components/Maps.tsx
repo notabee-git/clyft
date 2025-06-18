@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,7 +10,9 @@ import {
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { useLocationStore } from './store/useLocationStore'; // ✅ Import global store
+import { useLocationStore } from './store/useLocationStore';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { GOOGLE_PLACES_API_KEY } from '@env'; // from .env
 
 export default function LocationPicker() {
   const [location, setLocation] = useState<Region | null>(null);
@@ -19,8 +21,9 @@ export default function LocationPicker() {
     longitude: number;
   } | null>(null);
 
+  const mapRef = useRef<MapView>(null);
   const router = useRouter();
-  const setGlobalLocation = useLocationStore((state) => state.setGlobalCoordinates); // ✅ Set function
+  const setGlobalLocation = useLocationStore((state) => state.setGlobalCoordinates);
 
   useEffect(() => {
     (async () => {
@@ -51,8 +54,50 @@ export default function LocationPicker() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Search Bar */}
+      <GooglePlacesAutocomplete
+        placeholder="Search for a location"
+        fetchDetails
+        onPress={(data, details = null) => {
+          const loc = details?.geometry?.location;
+          if (loc) {
+            const region = {
+              latitude: loc.lat,
+              longitude: loc.lng,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            };
+            setLocation(region);
+            setMarkerPosition({ latitude: loc.lat, longitude: loc.lng });
+            mapRef.current?.animateToRegion(region, 1000);
+          }
+        }}
+        query={{
+          key: GOOGLE_PLACES_API_KEY,
+          language: 'en',
+        }}
+        styles={{
+          container: {
+            position: 'absolute',
+            width: '90%',
+            top: 10,
+            alignSelf: 'center',
+            zIndex: 1,
+          },
+          textInput: {
+            height: 44,
+            backgroundColor: '#fff',
+            borderRadius: 5,
+            paddingHorizontal: 10,
+            fontSize: 16,
+          },
+        }}
+      />
+
+      {/* Map */}
       {location && (
         <MapView
+          ref={mapRef}
           style={StyleSheet.absoluteFillObject}
           initialRegion={location}
           onRegionChangeComplete={handleRegionChange}
@@ -69,6 +114,7 @@ export default function LocationPicker() {
         </MapView>
       )}
 
+      {/* Overlay Buttons */}
       <View style={styles.overlay}>
         <Pressable
           style={({ pressed }) => [
@@ -77,9 +123,9 @@ export default function LocationPicker() {
           ]}
           onPress={() => {
             if (markerPosition) {
-              setGlobalLocation(markerPosition); // ✅ Save globally
+              setGlobalLocation(markerPosition);
               console.log('Selected Location:', markerPosition);
-              router.push('/StoreSelectionScreen'); // ✅ Navigate if needed
+              router.push('/StoreSelectionScreen');
             }
           }}
         >

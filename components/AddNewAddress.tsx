@@ -6,21 +6,24 @@ import { router } from 'expo-router';
 import {db, doc, getDoc, updateDoc } from '../firebaseConfig';
 import { getCurrentUserUUID } from './auth-helper';
 import { useLocalSearchParams } from "expo-router";
+import { GeoPoint } from 'firebase/firestore';
 
 
 type AddressType = 'Home' | 'Office' | 'Site' | 'Other';
 
 interface AddressFormData {
+  addressType: AddressType;
+  city: string;
   fullName: string;
   phoneNumber: string;
   pincode: string;
   state: string;
-  city: string;
   locality: string;
   flatBuilding: string;
   landmark: string;
-  addressType: AddressType;
   isDefault: boolean;
+  latitude:number;
+  longitude:number;
 }
 
 
@@ -38,18 +41,23 @@ const AddressForm: React.FC = () => {
     flatBuilding: '',
     landmark: '',
     addressType: 'Home',
-    isDefault: false
+    isDefault: false,
+    latitude:0,
+    longitude:0,
   });
   const params = useLocalSearchParams();
 
     useEffect(() => {
-      if (params && (params.pincode || params.city || params.state || params.locality)) {
+      if (params && (params.pincode || params.city || params.state || params.locality || params.latitude || params.longitude)) {
+        console.log(typeof params.latitude),
         setFormData((prev) => ({
           ...prev,
           pincode: typeof params.pincode === "string" ? params.pincode : "",
           state: typeof params.state === "string" ? params.state : "",
           city: typeof params.city === "string" ? params.city : "",
           locality: typeof params.locality === "string" ? params.locality : "",
+          latitude: typeof params.latitude === "string" ? parseFloat(params.latitude) : 0,
+          longitude: typeof params.longitude === "string" ? parseFloat(params.longitude) : 0,
         }));
       }
     }, []);
@@ -127,6 +135,7 @@ const handleSaveAddress = async () => {
         flatBuilding: formData.flatBuilding,
         landmark: formData.landmark,
         addressType: formData.addressType,
+        coordinates: new GeoPoint(formData.latitude,formData.longitude),
       };
 
       // Add the new address
