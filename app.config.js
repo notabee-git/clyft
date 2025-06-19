@@ -8,12 +8,14 @@ module.exports = {
     scheme: "myapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+    extra: {
+      GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.ClyftApp",
       config: {
-        googleMapsApiKey: process.env.API_KEY,
-
+        googleMapsApiKey: process.env.GOOGLE_PLACES_API_KEY,
       }
     },
     android: {

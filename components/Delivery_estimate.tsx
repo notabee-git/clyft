@@ -1,19 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, ActivityIndicator, FlatList } from 'react-native';
-import { Feather, AntDesign } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { Address } from '@/constants/types';
-import { useCart } from '@/context/cartContext';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  FlatList,
+} from "react-native";
+import { Feather, AntDesign } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { Address } from "@/constants/types";
+import { useCart } from "@/context/cartContext";
 
 export default function EstimateScreen() {
   const router = useRouter();
   const [temp_address, settempAddress] = useState<Address | null>(null);
   const [loading, setLoading] = useState(true);
   const { cart, address, setAddress } = useCart();
-  
+
   const db = getFirestore();
   const auth = getAuth();
 
@@ -27,23 +36,23 @@ export default function EstimateScreen() {
       try {
         const user = auth.currentUser;
         if (!user) {
-          console.log('No user logged in');
+          console.log("No user logged in");
           return;
         }
 
-        const userDocRef = doc(db, 'Users', user.uid);
+        const userDocRef = doc(db, "Users", user.uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const userData = docSnap.data();
           const addressinfo = userData.address[0] || [];
-          console.log('Fetched address:', addressinfo);
+          console.log("Fetched address:", addressinfo);
           setAddress(addressinfo);
           settempAddress(addressinfo);
         } else {
-          console.log('User document does not exist');
+          console.log("User document does not exist");
         }
       } catch (error) {
-        console.error('Failed to fetch address:', error);
+        console.error("Failed to fetch address:", error);
       } finally {
         setLoading(false);
       }
@@ -54,18 +63,22 @@ export default function EstimateScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <ActivityIndicator size="large" color="#000" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 32, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 32, backgroundColor: "#fff" }}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/Cart')}>
+          <TouchableOpacity onPress={() => router.replace("/Cart")}>
             <Feather name="arrow-left" size={22} color="#222" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Address</Text>
@@ -73,74 +86,75 @@ export default function EstimateScreen() {
 
         {/* Progress Bar */}
         <View style={styles.progressBar}>
-          <Text style={styles.progressActive}>                 </Text>
-          <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
+          <Text style={styles.progressActive}> </Text>
+          <AntDesign
+            name="arrowright"
+            size={18}
+            style={styles.progressArrowActive}
+          />
           <Text style={styles.progressActive}>Cart</Text>
-          <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
+          <AntDesign
+            name="arrowright"
+            size={18}
+            style={styles.progressArrowActive}
+          />
           <Text style={styles.progressActive}>Address</Text>
-          <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
+          <AntDesign
+            name="arrowright"
+            size={18}
+            style={styles.progressArrowInactive}
+          />
           <Text style={styles.progressInactive}>Payment</Text>
         </View>
         <View style={styles.cardSeparator} />
 
         {/* Address Block */}
         <View style={styles.addressListContainer}>
-<<<<<<< HEAD
           <View style={styles.addressDetailsContainer}>
             <View style={styles.addressHeaderRow}>
-              <Text style={styles.addressName}>{address?.name}</Text>
-              <TouchableOpacity onPress={() => router.push('/Select_address')}>
+              <Text style={styles.addressName}>{temp_address?.fullname}</Text>
+              <TouchableOpacity onPress={() => router.push("/Select_address")}>
                 <Text style={styles.changeButton}>Change</Text>
               </TouchableOpacity>
             </View>
-            {address?.addressLines?.map((line: string, idx: number) => (
-              <Text key={idx} style={styles.addressLine}>{line}</Text>
-            ))}
+
+            {/* Display full address lines */}
+            <Text style={styles.addressLine}>{temp_address?.flatBuilding}</Text>
+            <Text style={styles.addressLine}>{temp_address?.locality}</Text>
+            <Text
+              style={styles.addressLine}
+            >{`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}</Text>
+
+            {/* Optional landmark if present */}
+            {temp_address?.landmark ? (
+              <Text style={styles.addressLine}>
+                Landmark: {temp_address.landmark}
+              </Text>
+            ) : null}
+
+            {/* Address Type (like Home / Site) */}
+            {temp_address?.addressType ? (
+              <Text style={styles.addressLine}>
+                Type: {temp_address.addressType}
+              </Text>
+            ) : null}
+
+            {/* Mobile number */}
             <View style={styles.mobileContainer}>
               <Text style={styles.mobileLabel}>Mobile: </Text>
-              <Text style={styles.mobileNumber}>{address?.contact}</Text>
+              <Text style={styles.mobileNumber}>{temp_address?.mobile}</Text>
             </View>
           </View>
         </View>
-=======
-  <View style={styles.addressDetailsContainer}>
-    <View style={styles.addressHeaderRow}>
-      <Text style={styles.addressName}>{temp_address?.fullname}</Text>
-      <TouchableOpacity onPress={() => router.push('/Select_address')}>
-        <Text style={styles.changeButton}>Change</Text>
-      </TouchableOpacity>
-    </View>
-
-    {/* Display full address lines */}
-    <Text style={styles.addressLine}>{temp_address?.flatBuilding}</Text>
-    <Text style={styles.addressLine}>{temp_address?.locality}</Text>
-    <Text style={styles.addressLine}>{`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}</Text>
-
-    {/* Optional landmark if present */}
-    {temp_address?.landmark ? (
-      <Text style={styles.addressLine}>Landmark: {temp_address.landmark}</Text>
-    ) : null}
-
-    {/* Address Type (like Home / Site) */}
-    {temp_address?.addressType ? (
-      <Text style={styles.addressLine}>Type: {temp_address.addressType}</Text>
-    ) : null}
-
-    {/* Mobile number */}
-    <View style={styles.mobileContainer}>
-      <Text style={styles.mobileLabel}>Mobile: </Text>
-      <Text style={styles.mobileNumber}>{temp_address?.mobile}</Text>
-    </View>
-  </View>
-</View>
->>>>>>> 5b0922eeb021dec8d403c28e351fdeaa98f2bc1e
 
         <View style={styles.cardSeparator} />
 
         {/* Delivery Estimates */}
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
           <View style={styles.deliveryEstimatesContainer}>
-            <Text style={styles.deliveryEstimatesTitle}>Delivery Estimates</Text>
+            <Text style={styles.deliveryEstimatesTitle}>
+              Delivery Estimates
+            </Text>
 
             <FlatList
               data={cart}
@@ -148,12 +162,15 @@ export default function EstimateScreen() {
               renderItem={({ item }) => (
                 <View style={styles.deliveryItem}>
                   <Image
-                    source={{ uri: item.product.image || 'https://via.placeholder.com/100' }}
+                    source={{
+                      uri:
+                        item.product.image || "https://via.placeholder.com/100",
+                    }}
                     style={styles.deliveryItemImage}
                   />
                   <View style={styles.deliveryDetails}>
                     <Text style={styles.deliveryEstimateText}>
-                      Estimated delivery by{' '}
+                      Estimated delivery by{" "}
                       <Text style={styles.deliveryDate}>{"XXXX"}</Text>
                     </Text>
                   </View>
@@ -167,7 +184,7 @@ export default function EstimateScreen() {
         {/* Bottom Button */}
         <TouchableOpacity
           style={styles.deliverHereButton}
-          onPress={() => router.push('/payment')}
+          onPress={() => router.push("/payment")}
         >
           <Text style={styles.deliverHereButtonText}>DELIVER HERE</Text>
         </TouchableOpacity>
@@ -176,121 +193,120 @@ export default function EstimateScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 18,
     paddingBottom: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   headerTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 19,
-    color: '#222',
+    color: "#222",
     marginLeft: 14,
   },
   progressBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 10,
     marginTop: 2,
   },
   progressActive: {
-    color: '#0C8744',
-    fontWeight: 'bold',
+    color: "#0C8744",
+    fontWeight: "bold",
     fontSize: 15,
   },
   progressInactive: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: "#000",
+    fontWeight: "bold",
     fontSize: 15,
   },
   progressArrowActive: {
     marginHorizontal: 6,
-    color: '#0C8744',
+    color: "#0C8744",
   },
   progressArrowInactive: {
     marginHorizontal: 6,
-    color: '#000',
-  },  
+    color: "#000",
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   addressListContainer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   addressDetailsContainer: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   addressHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   addressName: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
-    color: '#222',
+    color: "#222",
   },
   changeButton: {
-    color: '#E63946', 
-    fontWeight: 'bold',
+    color: "#E63946",
+    fontWeight: "bold",
     fontSize: 15,
   },
   addressLine: {
     fontSize: 14,
-    color: '#222',
+    color: "#222",
     marginBottom: 2,
   },
   mobileContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 8,
   },
   mobileLabel: {
     fontSize: 14,
-    color: '#222',
+    color: "#222",
   },
   mobileNumber: {
     fontSize: 14,
-    color: '#222',
-    fontWeight: 'bold',
+    color: "#222",
+    fontWeight: "bold",
   },
   deliveryEstimatesContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   deliveryEstimatesTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
-    color: '#222',
+    color: "#222",
     marginBottom: 12,
   },
   deliveryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
     paddingBottom: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   deliveryItemImage: {
     width: 70,
     height: 70,
     borderRadius: 4,
-    backgroundColor: '#f3f3f3',
-    resizeMode: 'contain',
+    backgroundColor: "#f3f3f3",
+    resizeMode: "contain",
   },
   deliveryDetails: {
     marginLeft: 12,
@@ -298,27 +314,27 @@ const styles = StyleSheet.create({
   },
   deliveryEstimateText: {
     fontSize: 14,
-    color: '#222',
+    color: "#222",
   },
   deliveryDate: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   deliverHereButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     marginHorizontal: 16,
     marginTop: 80,
     paddingVertical: 16,
     borderRadius: 4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   deliverHereButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   cardSeparator: {
-  borderBottomColor: '#bcc0c4', 
-  borderBottomWidth: 2,        
-  marginVertical: 0,           
+    borderBottomColor: "#bcc0c4",
+    borderBottomWidth: 2,
+    marginVertical: 0,
   },
 });
