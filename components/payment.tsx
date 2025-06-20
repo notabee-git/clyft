@@ -22,7 +22,7 @@ import { auth } from "../firebaseConfig"; // your Firebase config file
 import { placeOrder } from "../utils/place_orders_in_cart"; // adjust path as needed
 import { Alert } from "react-native";
 export default function PaymentScreen() {
-  const { cart, totalAmount, address } = useCart();
+  const { cart, totalAmount, address, clearCart } = useCart();
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState("savedCard");
   const [expanded, setExpanded] = useState({
@@ -52,7 +52,7 @@ export default function PaymentScreen() {
         console.error("Address is null");
         return;
       }
-      await placeOrder(cart, user.uid, address);
+      await placeOrder(cart, user.uid, address, clearCart);
       Alert.alert("Success", "Order placed successfully!");
       // router.replace('/OrderConfirmation');
     } catch (error) {

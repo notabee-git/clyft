@@ -9,7 +9,7 @@ interface Subcategory {
   name: string;
   image: string;
 }
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SubcategoriesScreen() {
   const router = useRouter();
   const { name } = useLocalSearchParams(); // category name from route param
@@ -55,6 +55,7 @@ export default function SubcategoriesScreen() {
   );
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
         <CustomHeader backRoute="/Categories" backTitle="Categories" />
       
@@ -79,6 +80,7 @@ export default function SubcategoriesScreen() {
       {/* Bottom Navigation */}
       <Footer/>
     </View>
+    </SafeAreaView>
   );
 }
 

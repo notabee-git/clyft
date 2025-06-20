@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { db, doc, getDoc, updateDoc } from '../firebaseConfig';
 import { getCurrentUserUUID } from './auth-helper';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 type AddressType = 'Home' | 'Office' | 'Site' | 'Other';
 
 interface AddressFormData {
@@ -161,6 +161,7 @@ const EditAddress: React.FC = () => {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
@@ -287,6 +288,7 @@ const EditAddress: React.FC = () => {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

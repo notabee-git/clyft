@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { db, collection, getDocs } from "../firebaseConfig"; // Make sure to update path
 import { Footer } from "../components/Footer";
 import { CustomHeader } from "../components/CustomHeader";
+import { SafeAreaView } from 'react-native-safe-area-context';
 interface Category {
   name: string;
   image: string;
@@ -49,8 +50,9 @@ export default function CategoriesScreen() {
   );
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
-      <CustomHeader backRoute="/Homepage" backTitle="Home" />
+      <CustomHeader backRoute="/Homepage" backTitle="Categories" />
 
       <Text style={styles.sectionTitle}>Shop by category</Text>
 
@@ -73,6 +75,7 @@ export default function CategoriesScreen() {
       {/* Bottom Navigation */}
       <Footer/>
     </View>
+    </SafeAreaView>
   );
 }
 

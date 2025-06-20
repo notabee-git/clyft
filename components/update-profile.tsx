@@ -133,7 +133,7 @@ export default function UpdateProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       {/* Header */}
       {/* <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>

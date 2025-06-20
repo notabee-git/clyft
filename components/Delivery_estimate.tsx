@@ -150,7 +150,6 @@ export default function EstimateScreen() {
         <View style={styles.cardSeparator} />
 
         {/* Delivery Estimates */}
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
           <View style={styles.deliveryEstimatesContainer}>
             <Text style={styles.deliveryEstimatesTitle}>
               Delivery Estimates
@@ -179,7 +178,6 @@ export default function EstimateScreen() {
               showsVerticalScrollIndicator={false}
             />
           </View>
-        </SafeAreaView>
 
         {/* Bottom Button */}
         <TouchableOpacity

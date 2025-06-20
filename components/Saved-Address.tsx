@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { getCurrentUserUUID } from './auth-helper';
 import { db, doc, getDoc, updateDoc } from '../firebaseConfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StyleSheet } from 'react-native';
 
