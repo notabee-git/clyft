@@ -10,6 +10,7 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { checkAndCreateUser } from './addUser'; // Adjust path as needed
 
 import { Feather } from "@expo/vector-icons";
@@ -85,6 +86,7 @@ export default function HomeScreen() {
   }, []);
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.greenBackground}>
@@ -189,6 +191,7 @@ export default function HomeScreen() {
 
       <Footer />
     </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Image, Dimensions, ImageSourcePropType } from 'react-native';
 import { router } from 'expo-router';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const IMAGE_WIDTH = screenWidth * 0.8;
@@ -28,6 +28,7 @@ const CombinedSelectionScreen: React.FC = () => {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
       <StoreCard
         logo={require('../assets/buildstore.png')}
@@ -39,6 +40,7 @@ const CombinedSelectionScreen: React.FC = () => {
         // onPress={() => handleStoreSelect('ClyftCrew')}
       />
     </View>
+    </SafeAreaView>
   );
 };
 

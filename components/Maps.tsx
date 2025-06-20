@@ -1,20 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  Text,
-  Pressable,
-  SafeAreaView,
-} from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
-import { useLocationStore } from './store/useLocationStore';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import Constants from 'expo-constants';
+import React, { useEffect, useState, useRef } from "react";
+import { View, StyleSheet, Dimensions, Text, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MapView, { Marker, Region } from "react-native-maps";
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { useLocationStore } from "./store/useLocationStore";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import Constants from "expo-constants";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const GOOGLE_PLACES_API_KEY = Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
+const GOOGLE_PLACES_API_KEY =
+  Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
 
 export default function LocationPicker() {
   const [location, setLocation] = useState<Region | null>(null);
@@ -22,16 +18,18 @@ export default function LocationPicker() {
     latitude: number;
     longitude: number;
   } | null>(null);
-
+  const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
-  const setGlobalLocation = useLocationStore((state) => state.setGlobalCoordinates);
+  const setGlobalLocation = useLocationStore(
+    (state) => state.setGlobalCoordinates
+  );
 
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('Permission to access location was denied');
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
         return;
       }
 
@@ -76,19 +74,19 @@ export default function LocationPicker() {
         }}
         query={{
           key: GOOGLE_PLACES_API_KEY,
-          language: 'en',
+          language: "en",
         }}
         styles={{
           container: {
-            position: 'absolute',
-            width: '90%',
-            top: 10,
-            alignSelf: 'center',
+            position: "absolute",
+            width: "90%",
+            top: insets.top + 10, // ✅ DYNAMIC OFFSET
+            alignSelf: "center",
             zIndex: 1,
           },
           textInput: {
             height: 44,
-            backgroundColor: '#fff',
+            backgroundColor: "#fff",
             borderRadius: 5,
             paddingHorizontal: 10,
             fontSize: 16,
@@ -108,9 +106,7 @@ export default function LocationPicker() {
             <Marker
               draggable
               coordinate={markerPosition}
-              onDragEnd={(e) =>
-                setMarkerPosition(e.nativeEvent.coordinate)
-              }
+              onDragEnd={(e) => setMarkerPosition(e.nativeEvent.coordinate)}
             />
           )}
         </MapView>
@@ -126,17 +122,14 @@ export default function LocationPicker() {
           onPress={() => {
             if (markerPosition) {
               setGlobalLocation(markerPosition);
-              console.log('Selected Location:', markerPosition);
-              router.push('/StoreSelectionScreen');
+              console.log("Selected Location:", markerPosition);
+              router.push("/StoreSelectionScreen");
             }
           }}
         >
           {({ pressed }) => (
             <Text
-              style={[
-                styles.buttonText,
-                pressed && styles.buttonTextPressed,
-              ]}
+              style={[styles.buttonText, pressed && styles.buttonTextPressed]}
             >
               Confirm Location
             </Text>
@@ -148,14 +141,11 @@ export default function LocationPicker() {
             styles.button,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => router.push('/Maps')}
+          onPress={() => router.push("/Maps")}
         >
           {({ pressed }) => (
             <Text
-              style={[
-                styles.buttonText,
-                pressed && styles.buttonTextPressed,
-              ]}
+              style={[styles.buttonText, pressed && styles.buttonTextPressed]}
             >
               Enter location manually
             </Text>
@@ -169,33 +159,33 @@ export default function LocationPicker() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 30,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     gap: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   button: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 10,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   buttonPressed: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   buttonTextPressed: {
-    color: '#000',
+    color: "#000",
   },
 });

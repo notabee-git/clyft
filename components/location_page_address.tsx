@@ -13,7 +13,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import Constants from 'expo-constants';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const GOOGLE_PLACES_API_KEY = Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
 export default function LocationScreen() {
   const router = useRouter();
@@ -119,6 +119,7 @@ export default function LocationScreen() {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
       <GooglePlacesAutocomplete
         placeholder="Search for a location"
@@ -197,6 +198,7 @@ export default function LocationScreen() {
         <Text style={styles.buttonText}>Use this location</Text>
       </TouchableOpacity>
     </View>
+    </SafeAreaView>
   );
 }
 

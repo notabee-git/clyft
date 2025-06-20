@@ -5,6 +5,7 @@ import { db } from "../../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { Footer } from "../../components/Footer";
 import { CustomHeader } from "../../components/CustomHeader";
+import { SafeAreaView } from 'react-native-safe-area-context';
 interface WideItem {
   name: string;
   image: string;
@@ -63,6 +64,7 @@ export default function WidelistingScreen() {
   );
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
     <CustomHeader
       // backRoute={{
@@ -92,6 +94,7 @@ export default function WidelistingScreen() {
         <Footer/>
       {/* Bottom Navigation */}
     </View>
+    </SafeAreaView>
   );
 }
 

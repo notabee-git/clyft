@@ -180,6 +180,7 @@ export default function ProductDetailScreen() {
   const handleColorSelect = (color: string) => setSelectedColor(color);
 
  return (
+  <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
   <View style={styles.container}>
         <CustomHeader
           // backRoute={{
@@ -373,6 +374,7 @@ export default function ProductDetailScreen() {
     <Footer />
     
   </View>
+  </SafeAreaView>
 );
 }
 

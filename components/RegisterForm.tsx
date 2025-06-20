@@ -4,16 +4,18 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import {
   PhoneAuthProvider,
   signInWithCredential,
 } from "firebase/auth";
-
 import { auth } from "../firebaseConfig";
 
 export default function RegisterForm() {
@@ -23,7 +25,6 @@ export default function RegisterForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationId, setVerificationId] = useState("");
   const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
 
   const sendVerification = async () => {
     if (!phoneNumber.match(/^\+\d{10,}$/)) {
@@ -58,100 +59,111 @@ export default function RegisterForm() {
   };
 
   return (
-    <View style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={auth.app.options}
-      />
-
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your phone number"
-          keyboardType="phone-pad"
-          autoCapitalize="none"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-        />
-
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={sendVerification}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.continueText}>Send OTP</Text>
-        </TouchableOpacity>
+          <FirebaseRecaptchaVerifierModal
+            ref={recaptchaVerifier}
+            firebaseConfig={auth.app.options}
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Enter verification code"
-          keyboardType="number-pad"
-          value={code}
-          onChangeText={setCode}
-        />
+          <Text style={styles.headerText}>Phone Verification</Text>
 
-        <TouchableOpacity style={styles.continueButton} onPress={confirmCode}>
-          <Text style={styles.continueText}>Verify OTP</Text>
-        </TouchableOpacity>
-      </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter phone number (+91...)"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+          />
 
-      <View style={styles.footerContainer}>
-        <Text style={styles.footer}>By continuing, you agree to our</Text>
-        <Text style={styles.terms}>Terms of Use & Privacy Policy</Text>
-      </View>
-    </View>
+          <TouchableOpacity style={styles.button} onPress={sendVerification}>
+            <Text style={styles.buttonText}>Send OTP</Text>
+          </TouchableOpacity>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Enter verification code"
+            keyboardType="number-pad"
+            value={code}
+            onChangeText={setCode}
+          />
+
+          <TouchableOpacity style={styles.button} onPress={confirmCode}>
+            <Text style={styles.buttonText}>Verify OTP</Text>
+          </TouchableOpacity>
+
+          <View style={styles.footerContainer}>
+            <Text style={styles.footer}>By continuing, you agree to our</Text>
+            <Text style={styles.terms}>Terms of Use & Privacy Policy</Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 60,
-    alignItems: "center",
+    paddingHorizontal: 24,
+    backgroundColor: "#fff",
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    paddingVertical: 0,
+    paddingBottom: 40,
   },
-  formContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginTop: 20,
+  headerText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 24,
   },
   input: {
-    width: "80%",
-    padding: 10,
+    width: "100%",
+    padding: 14,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
+    borderRadius: 10,
     fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 16,
   },
-  continueButton: {
-    marginTop: 10,
-    backgroundColor: "#444",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
+  button: {
+    width: "100%",
+    backgroundColor: "#000",
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 20,
   },
-  continueText: {
+  buttonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 17,
+    fontWeight: "600",
   },
   footerContainer: {
-    position: "absolute",
-    bottom: 30,
+    marginTop: 30,
     alignItems: "center",
-    width: "100%",
+    paddingBottom: 10,
   },
   footer: {
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
+    color: "#555",
   },
   terms: {
     fontSize: 14,
     fontStyle: "italic",
+    color: "#000",
+    marginTop: 4,
   },
 });
-
