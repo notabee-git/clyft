@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { db } from "../../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { Footer } from "../../components/Footer";
+import { CustomHeader } from "../../components/CustomHeader";
 interface Subcategory {
   name: string;
   image: string;
@@ -42,7 +43,10 @@ export default function SubcategoriesScreen() {
     <View style={styles.categoryItem}>
           <TouchableOpacity onPress={() => router.push({
             pathname: '/widelisting/[subcategoryName]',
-            params: { name : encodeURIComponent(item.name) },
+            params: { name : encodeURIComponent(item.name) ,
+              // Pass the category name as a parameter
+              category: encodeURIComponent(name as string),
+            },
           })}>
             <Image source={{ uri: item.image }} style={styles.categoryImage} resizeMode="cover" />
             <Text style={styles.categoryText}>{item.name}</Text>
@@ -52,6 +56,8 @@ export default function SubcategoriesScreen() {
 
   return (
     <View style={styles.container}>
+        <CustomHeader backRoute="/Categories" backTitle="Categories" />
+      
       <Text style={styles.sectionTitle}>Subcategories in {name}</Text>
 
       <View style={styles.categoryContainer}>

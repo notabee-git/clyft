@@ -18,12 +18,15 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { useCart,  } from "../context/cartContext";
 import { WideItemFb, CartItem} from '@/constants/types';
 
+import { CustomHeader } from "../components/CustomHeader";
+
 
 
 
 export default function ProductDetailScreen() {
   const router = useRouter();
   const { name } = useLocalSearchParams();
+  const {subcategory} = useLocalSearchParams();
   const [widelisting, setWidelisting] = useState<WideItemFb[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -178,6 +181,13 @@ export default function ProductDetailScreen() {
 
  return (
   <View style={styles.container}>
+        <CustomHeader
+          // backRoute={{
+          //   pathname: '/subcategories/name',
+          //   params: { name: encodeURIComponent(name) },
+          // }}
+          backTitle={subcategory}
+      />
     
     <View style={styles.header}>
       {/* Uncomment if needed */}

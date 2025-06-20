@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { db } from "../../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { Footer } from "../../components/Footer";
+import { CustomHeader } from "../../components/CustomHeader";
 interface WideItem {
   name: string;
   image: string;
@@ -12,6 +13,7 @@ interface WideItem {
 export default function WidelistingScreen() {
   const router = useRouter();
   const { name } = useLocalSearchParams(); // subcategory name from route param
+  const {category} = useLocalSearchParams(); // category name from route param
   const [widelisting, setWidelisting] = useState<WideItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,10 @@ export default function WidelistingScreen() {
             pathname: "/Product_page", 
             params: { 
               name: item.name,
+              //subcategory name is taken from the route params
+              // so we can use it directly
+
+              subcategory: name as string,
             } 
           });
         }}
@@ -58,6 +64,14 @@ export default function WidelistingScreen() {
 
   return (
     <View style={styles.container}>
+    <CustomHeader
+      // backRoute={{
+      //   pathname: '/subcategories/name',
+      //   params: { name: encodeURIComponent(name) },
+      // }}
+      backTitle={category as string}
+  />
+
       <Text style={styles.sectionTitle}>Items in {name}</Text>
 
       <View style={styles.categoryContainer}>

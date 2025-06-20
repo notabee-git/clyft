@@ -10,7 +10,6 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CartProvider } from '../context/cartContext'; // Adjust the path if needed
-import { UserProvider } from '@/context/userContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,19 +29,18 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-  
+
   return (
     <SafeAreaProvider>
-        <CartProvider>
-              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <StatusBar style="auto" />
-              </ThemeProvider>
-        </CartProvider>
+      <CartProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </CartProvider>
     </SafeAreaProvider>
-
   );
 }

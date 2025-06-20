@@ -8,6 +8,7 @@ import { onAuthStateChanged, getAuth } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native';
+import { CustomHeader } from './CustomHeader';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -266,6 +267,8 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+            {/* <CustomHeader backRoute="/Homepage" backTitle="Home" /> */}
+      
       <ScrollView>
         {/* Header */}
         <View style={styles.header}>

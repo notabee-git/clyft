@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from "react
 import { useRouter } from "expo-router";
 import { db, collection, getDocs } from "../firebaseConfig"; // Make sure to update path
 import { Footer } from "../components/Footer";
+import { CustomHeader } from "../components/CustomHeader";
 interface Category {
   name: string;
   image: string;
@@ -49,6 +50,8 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader backRoute="/Homepage" backTitle="Home" />
+
       <Text style={styles.sectionTitle}>Shop by category</Text>
 
       <View style={styles.categoryContainer}>
