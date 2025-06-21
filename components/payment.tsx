@@ -23,6 +23,8 @@ import { placeOrder } from "../utils/place_orders_in_cart"; // adjust path as ne
 import { Alert } from "react-native";
 export default function PaymentScreen() {
   const { cart, totalAmount, address, clearCart } = useCart();
+  const steps = ["Cart", "Address", "Payment"];
+  const currentStep = 2;
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState("savedCard");
   const [expanded, setExpanded] = useState({
@@ -82,28 +84,48 @@ export default function PaymentScreen() {
         </TouchableOpacity>
 
         {/* Progress Bar */}
-        <View style={styles.progressBar}>
-          <Text style={styles.progressActive}> </Text>
-          <AntDesign
-            name="arrowright"
-            size={18}
-            style={styles.progressArrowActive}
-          />
-          <Text style={styles.progressActive}>Cart</Text>
-          <AntDesign
-            name="arrowright"
-            size={18}
-            style={styles.progressArrowActive}
-          />
-          <Text style={styles.progressActive}>Address</Text>
-          <AntDesign
-            name="arrowright"
-            size={18}
-            style={styles.progressArrowActive}
-          />
-          <Text style={styles.progressActive}>Payment</Text>
-        </View>
-        <View style={styles.cardSeparator} />
+        <View style={styles.stepper}>
+                        {steps.map((step, index) => {
+                          const isCompleted = index < currentStep;
+                          const isActive = index === currentStep;
+                
+                          return (
+                            <React.Fragment key={step}>
+                              {/* Dot */}
+                              <View
+                                style={[
+                                  styles.dot,
+                                  isCompleted && styles.dotCompleted,
+                                  isActive && styles.dotActive,
+                                ]}
+                              />
+                              {/* Label */}
+                              <Text
+                                style={[
+                                  styles.label,
+                                  isCompleted || isActive
+                                    ? styles.labelActive
+                                    : styles.labelInactive,
+                                ]}
+                              >
+                                {step}
+                              </Text>
+                
+                              {/* Line */}
+                              {index < steps.length - 1 && (
+                                <View
+                                  style={[
+                                    styles.line,
+                                    index < currentStep
+                                      ? styles.lineActive
+                                      : styles.lineInactive,
+                                  ]}
+                                />
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </View>
         {/* Bank Offer */}
         <View style={styles.offerContainer}>
           <Ionicons
@@ -434,6 +456,66 @@ export default function PaymentScreen() {
 }
 
 const styles = StyleSheet.create({
+  stepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#d1d5db", // gray
+    marginHorizontal: 4,
+  },
+
+  dotCompleted: {
+    backgroundColor: "#0C8744",
+    shadowColor: "#0C8744",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+
+  dotActive: {
+    backgroundColor: "#0C8744",
+    borderWidth: 1,
+    borderColor: "#0C8744",
+  },
+
+  label: {
+    fontSize: 11,
+    marginRight: 6,
+    marginLeft: 2,
+  },
+
+  labelActive: {
+    color: "#0C8744",
+    fontWeight: "600",
+  },
+
+  labelInactive: {
+    color: "#9ca3af",
+  },
+
+  line: {
+    width: 20,
+    height: 1.5,
+    marginHorizontal: 2,
+    marginBottom: 2,
+  },
+
+  lineActive: {
+    backgroundColor: "#0C8744",
+  },
+
+  lineInactive: {
+    backgroundColor: "#d1d5db",
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",

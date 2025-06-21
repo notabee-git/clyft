@@ -10,8 +10,7 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { checkAndCreateUser } from './addUser'; // Adjust path as needed
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -19,7 +18,7 @@ import * as Location from "expo-location";
 
 import { db, collection, getDocs } from "../firebaseConfig";
 import { Footer } from "../components/Footer";
-import { getCurrentUserUUID } from './auth-helper'; // ✅ Import helper function to get current user UUID
+import { getCurrentUserUUID } from "./auth-helper"; // ✅ Import helper function to get current user UUID
 import { useLocationStore } from "./store/useLocationStore"; // ✅ Import global store
 interface Category {
   name: string;
@@ -35,7 +34,7 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    checkAndCreateUser(); // Ensure user is created or checked on component mount
+    // Ensure user is created or checked on component mount
     // Fetch categories from Firestore
     const fetchCategories = async () => {
       try {
@@ -71,7 +70,9 @@ export default function HomeScreen() {
         });
 
         if (location) {
-          const address = `${location.name || ""}, ${location.city || ""}, ${location.postalCode || ""}`;
+          const address = `${location.name || ""}, ${location.city || ""}, ${
+            location.postalCode || ""
+          }`;
           setSelectedLocation(address.trim());
         } else {
           setSelectedLocation(null);
@@ -86,111 +87,146 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-    <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.greenBackground}>
-          <View style={styles.header}>
-            <View style={styles.leftHeader}>
-              <Ionicons name="location-sharp" size={30} color="white" style={{ marginRight: 8 }} />
-              <View>
-                <Text style={styles.deliveryText}>Delivery to</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (!selectedLocation) {
-                      router.push("/Maps");
-                    } else {
-                      setModalVisible(true);
-                    }
-                  }}
-                  style={styles.dropdownTrigger}
-                >
-                  <Text style={styles.locationText} numberOfLines={1}>
-                    {selectedLocation || "Select Location"}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="white" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <TouchableOpacity onPress={() => router.push("/Cart")}>
-              <Ionicons name="cart" size={30} color="white" style={styles.cartIcon} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="green" />
-            <TextInput placeholder='Search for "Cement"' style={styles.searchInput} />
-          </View>
-
-          <Image
-            source={require("../assets/Homepage_img.png")}
-            style={styles.CentreImage}
-          />
-
-          <View style={styles.banner}>
-            <Text style={styles.bannerText}>Clyft’s Intro Banners</Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Shop by category</Text>
-
-        <View style={styles.categoryContainer}>
-          {loading ? (
-            <Text>Loading categories...</Text>
-          ) : categories.length === 0 ? (
-            <Text>No categories available</Text>
-          ) : (
-            categories.slice(0, 3).map((item, idx) => (
-              <TouchableOpacity key={idx} onPress={() => {}}>
-                <View style={styles.categoryItem}>
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.categoryImage}
-                    resizeMode="cover"
-                  />
-                  <Text style={styles.categoryText}>{item.name}</Text>
+    <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      <View style={styles.container}>
+        <ScrollView>
+          <View style={styles.greenBackground}>
+            <View style={styles.header}>
+              <View style={styles.leftHeader}>
+                <Ionicons
+                  name="location-sharp"
+                  size={30}
+                  color="white"
+                  style={{ marginRight: 8 }}
+                />
+                <View>
+                  <Text style={styles.deliveryText}>Delivery to</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (!selectedLocation) {
+                        router.push("/Maps");
+                      } else {
+                        setModalVisible(true);
+                      }
+                    }}
+                    style={styles.dropdownTrigger}
+                  >
+                    <Text style={styles.locationText} numberOfLines={1}>
+                      {selectedLocation || "Select Location"}
+                    </Text>
+                    <Ionicons name="chevron-down" size={16} color="white" />
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/Categories")}>
-          <Text style={styles.text}>See all categories</Text>
-          <Feather name="chevron-right" size={18} color="#1A1A2E" />
-        </TouchableOpacity>
-
-        <Text style={styles.sectionTitle}>Bestsellers</Text>
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/Categories")}>
-          <Text style={styles.text}>See all products</Text>
-          <Feather name="chevron-right" size={18} color="#1A1A2E" />
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Optional Modal: If you want to show pre-defined location list */}
-      {selectedLocation && (
-        <Modal transparent visible={modalVisible} animationType="fade">
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            onPress={() => setModalVisible(false)}
-          >
-            <View style={styles.dropdown}>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  router.push("/Maps");
-                }}
-                style={styles.dropdownItem}
-              >
-                <Text style={styles.dropdownItemText}>Change Location</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push("/Cart")}>
+                <Ionicons
+                  name="cart"
+                  size={30}
+                  color="white"
+                  style={styles.cartIcon}
+                />
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
 
-      <Footer />
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color="green" />
+              <TextInput
+                placeholder='Search for "Cement"'
+                style={styles.searchInput}
+              />
+            </View>
+
+            <Image
+              source={require("../assets/Homepage_img.png")}
+              style={styles.CentreImage}
+            />
+
+            <View style={styles.banner}>
+              <Text style={styles.bannerText}>Clyft’s Intro Banners</Text>
+            </View>
+          </View>
+
+          <Text style={styles.sectionTitle}>Shop by category</Text>
+
+          <View style={styles.categoryContainer}>
+            {loading ? (
+              <Text>Loading categories...</Text>
+            ) : categories.length === 0 ? (
+              <Text>No categories available</Text>
+            ) : (
+              categories.slice(0, 3).map((item, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/subcategories/[categoryName]",
+                      params: { name: encodeURIComponent(item.name) },
+                    })
+                  }
+                >
+                  <View style={styles.categoryItem}>
+                    <Image
+                      source={{ uri: item.image }}
+                      style={styles.categoryImage}
+                      resizeMode="cover"
+                    />
+                    <Text style={styles.categoryText}>{item.name}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/Categories")}
+          >
+            <Text style={styles.text}>See all categories</Text>
+            <Feather name="chevron-right" size={18} color="#1A1A2E" />
+          </TouchableOpacity>
+
+          <Text style={styles.sectionTitle}>Bestsellers</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/Categories")}
+          >
+            <Text style={styles.text}>See all products</Text>
+            <Feather name="chevron-right" size={18} color="#1A1A2E" />
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* Optional Modal: If you want to show pre-defined location list */}
+        {selectedLocation && (
+          <Modal transparent visible={modalVisible} animationType="fade">
+  <TouchableOpacity
+    style={styles.modalOverlay}
+    activeOpacity={1}
+    onPressOut={() => setModalVisible(false)}
+  >
+    <View style={styles.modalCenteredView}>
+      <View style={styles.dropdown}>
+        <Text style={styles.locationInModal}>
+          📍 {selectedLocation || "No location selected"}
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => {
+            setModalVisible(false);
+            router.push("/Maps");
+          }}
+          style={styles.dropdownItem}
+        >
+          <Text style={styles.dropdownItemText}>Change Location</Text>
+        </TouchableOpacity>
+      </View>
     </View>
+  </TouchableOpacity>
+</Modal>
+
+        )}
+
+        <Footer />
+      </View>
     </SafeAreaView>
   );
 }
@@ -206,7 +242,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   leftHeader: { flexDirection: "row", alignItems: "center", flex: 1 },
-  deliveryText: { fontSize: 16, color: "white", fontFamily: "OpenSans_400Regular" },
+  deliveryText: {
+    fontSize: 16,
+    color: "white",
+    fontFamily: "OpenSans_400Regular",
+  },
   dropdownTrigger: {
     flexDirection: "row",
     alignItems: "center",
@@ -259,7 +299,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingTop: 16,
   },
-  categoryItem: { alignItems: "center", marginHorizontal: 10, marginBottom: 16 },
+  categoryItem: {
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginBottom: 16,
+  },
   categoryImage: { width: 80, height: 80, borderRadius: 10, marginBottom: 8 },
   categoryText: {
     fontSize: 14,
@@ -292,21 +336,49 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 10,
   },
-
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
   dropdown: {
     backgroundColor: "white",
     marginHorizontal: 40,
     borderRadius: 6,
     paddingVertical: 10,
   },
-  dropdownItem: { padding: 10 },
-  dropdownItemText: {
-    fontSize: 16,
-    fontFamily: "OpenSans_700Bold",
-  },
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+modalCenteredView: {
+  width: '80%',
+  backgroundColor: '#fff',
+  borderRadius: 10,
+  padding: 16,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5,
+},
+
+locationInModal: {
+  fontSize: 14,
+  color: '#4b5563', // Tailwind gray-600
+  marginBottom: 10,
+  fontFamily: 'OpenSans_700Bold',
+  textAlign: 'center',
+},
+
+dropdownItem: {
+  backgroundColor: '#f3f4f6',
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+},
+
+dropdownItemText: {
+  fontSize: 16,
+  fontFamily: 'OpenSans_700Bold',
+  color: 'black',
+},
 });

@@ -190,7 +190,7 @@ const YourOrdersScreen = () => {
             {orders.map(renderOrderItem)}
           </View>
 
-          <TouchableOpacity style={styles.loadMoreButton}>
+          {/* <TouchableOpacity style={styles.loadMoreButton}>
             <Text style={styles.loadMoreText}>Load More</Text>
             <Ionicons
               name="chevron-down"
@@ -198,7 +198,7 @@ const YourOrdersScreen = () => {
               color="#212652"
               style={styles.loadMoreIcon}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
       )}
     </SafeAreaView>

@@ -50,7 +50,6 @@ export default function CategoriesScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
       <CustomHeader backRoute="/Homepage" backTitle="Categories" />
 
@@ -75,7 +74,6 @@ export default function CategoriesScreen() {
       {/* Bottom Navigation */}
       <Footer/>
     </View>
-    </SafeAreaView>
   );
 }
 
