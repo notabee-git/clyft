@@ -1,13 +1,27 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export const CustomHeader = ({ backRoute, backTitle }: { backRoute?: string; backTitle?: string }) => {
+export const CustomHeader = ({
+  backRoute,
+  backTitle,
+}: {
+  backRoute?: string;
+  backTitle?: string;
+}) => {
   const router = useRouter();
 
   return (
-    <View style={styles.headerContainer}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         {/* Back Section */}
         <TouchableOpacity
@@ -19,18 +33,21 @@ export const CustomHeader = ({ backRoute, backTitle }: { backRoute?: string; bac
         </TouchableOpacity>
 
         {/* Cart Section */}
-        <TouchableOpacity style={styles.cartGroup} onPress={() => router.push('/Cart')}>
+        <TouchableOpacity
+          style={styles.cartGroup}
+          onPress={() => router.push('/Cart')}
+        >
           <Ionicons name="cart-outline" size={24} color="#111" />
           <Text style={styles.cartText}>Cart</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
-  headerContainer: {
-    backgroundColor: '#D6F5DD', // Light green like your screenshot
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 44,
+  safeArea: {
+    backgroundColor: '#D6F5DD',
   },
   header: {
     height: 60,
@@ -38,6 +55,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    backgroundColor: '#D6F5DD',
   },
   backGroup: {
     flexDirection: 'row',
@@ -56,7 +74,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#111',
     marginTop: 2,
-    //make it bold
     fontWeight: '900',
   },
 });

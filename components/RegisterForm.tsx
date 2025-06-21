@@ -17,6 +17,7 @@ import {
   signInWithCredential,
 } from "firebase/auth";
 import { auth } from "../firebaseConfig";
+import { checkAndCreateUser } from './addUser';
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -51,6 +52,7 @@ export default function RegisterForm() {
       const credential = PhoneAuthProvider.credential(verificationId, code);
       await signInWithCredential(auth, credential);
       alert("Phone authentication successful ✅");
+      checkAndCreateUser();
       router.push("/Maps");
     } catch (err: any) {
       console.error(err);

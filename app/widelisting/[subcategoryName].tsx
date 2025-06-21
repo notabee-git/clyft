@@ -64,7 +64,6 @@ export default function WidelistingScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
     <CustomHeader
       // backRoute={{
@@ -94,7 +93,6 @@ export default function WidelistingScreen() {
         <Footer/>
       {/* Bottom Navigation */}
     </View>
-    </SafeAreaView>
   );
 }
 

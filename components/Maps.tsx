@@ -1,13 +1,18 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, StyleSheet, Dimensions, Text, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  View,
+  StyleSheet,
+  Text,
+  Pressable,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import MapView, { Marker, Region } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useLocationStore } from "./store/useLocationStore";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import Constants from "expo-constants";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const GOOGLE_PLACES_API_KEY =
   Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
@@ -18,6 +23,7 @@ export default function LocationPicker() {
     latitude: number;
     longitude: number;
   } | null>(null);
+
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
@@ -80,7 +86,7 @@ export default function LocationPicker() {
           container: {
             position: "absolute",
             width: "90%",
-            top: insets.top + 10, // ✅ DYNAMIC OFFSET
+            top: insets.top + 10,
             alignSelf: "center",
             zIndex: 1,
           },
@@ -94,8 +100,8 @@ export default function LocationPicker() {
         }}
       />
 
-      {/* Map */}
-      {location && (
+      {/* Map or Loader */}
+      {location ? (
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFillObject}
@@ -110,6 +116,11 @@ export default function LocationPicker() {
             />
           )}
         </MapView>
+      ) : (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={styles.loadingText}>Loading map...</Text>
+        </View>
       )}
 
       {/* Overlay Buttons */}
@@ -122,7 +133,6 @@ export default function LocationPicker() {
           onPress={() => {
             if (markerPosition) {
               setGlobalLocation(markerPosition);
-              console.log("Selected Location:", markerPosition);
               router.push("/StoreSelectionScreen");
             }
           }}
@@ -159,7 +169,18 @@ export default function LocationPicker() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#555",
   },
   overlay: {
     position: "absolute",

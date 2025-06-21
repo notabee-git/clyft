@@ -100,7 +100,7 @@ export default function SelectAddressScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={{ padding: 4 }}>
@@ -111,14 +111,14 @@ export default function SelectAddressScreen() {
       </View>
 
       {/* Progress Bar */}
-      <View style={styles.progressBar}>
+      {/* <View style={styles.progressBar}>
         <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
         <Text style={styles.progressActive}>Cart</Text>
         <AntDesign name="arrowright" size={18} style={styles.progressArrowActive} />
         <Text style={styles.progressActive}>Address</Text>
         <AntDesign name="arrowright" size={18} style={styles.progressArrowInactive} />
         <Text style={styles.progressInactive}>Payment</Text>
-      </View>
+      </View> */}
 
       {/* Add New Address Button */}
       <TouchableOpacity
@@ -131,7 +131,7 @@ export default function SelectAddressScreen() {
       <ScrollView>{renderAddresses()}</ScrollView>
 
       {/* Deliver Here Button */}
-      <TouchableOpacity style={styles.deliverBtn} onPress={() => {router.push('/Delivery_estimate');}}>
+      <TouchableOpacity style={styles.deliverBtn} onPress={() => {router.replace('/Delivery_estimate');}}>
         <Text style={styles.deliverBtnText}>DELIVER HERE</Text>
       </TouchableOpacity>
     </SafeAreaView>

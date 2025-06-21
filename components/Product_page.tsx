@@ -180,7 +180,6 @@ export default function ProductDetailScreen() {
   const handleColorSelect = (color: string) => setSelectedColor(color);
 
  return (
-  <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
   <View style={styles.container}>
         <CustomHeader
           // backRoute={{
@@ -336,18 +335,23 @@ export default function ProductDetailScreen() {
 
       <Text style={styles.sectionTitle}>Price/pc as per quantity</Text>
       <View style={styles.bulkPricingContainer}>
-        {widelisting.length > 0 &&
-          widelisting[0].variants
-            .find((variant) => variant.size === selectedSize)
-            ?.priceTiers.map((pricing, index) => (
-              <View key={index} style={styles.bulkPriceOption}>
-                <Text style={styles.bulkPriceRange}>
-                  {pricing.min} - {pricing.max ?? "∞"}
-                </Text>
-                <Text style={styles.bulkPriceValue}>₹{pricing.price}</Text>
-              </View>
-            ))}
-      </View>
+  <View style={styles.tableHeader}>
+    <Text style={styles.headerText}>Quantity Range</Text>
+    <Text style={styles.headerText}>Price</Text>
+  </View>
+  {widelisting.length > 0 &&
+    widelisting[0].variants
+      .find((variant) => variant.size === selectedSize)
+      ?.priceTiers.map((pricing, index) => (
+        <View key={index} style={styles.tableRow}>
+          <Text style={styles.rowText}>
+            {pricing.min} - {pricing.max ?? "∞"}
+          </Text>
+          <Text style={styles.rowText}>₹{pricing.price}</Text>
+        </View>
+      ))}
+</View>
+
 
       <View style={styles.addToCartContainer}>
         <Text style={styles.quantityTitle}>Enter Quantity</Text>
@@ -374,7 +378,6 @@ export default function ProductDetailScreen() {
     <Footer />
     
   </View>
-  </SafeAreaView>
 );
 }
 
@@ -666,29 +669,40 @@ const styles = StyleSheet.create({
     
   },
   bulkPricingContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 32,
-    paddingLeft:15,
-  },
-  bulkPriceOption: {
-    backgroundColor: '#d1d5db',
-    borderRadius: 9999,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginRight: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-    height: 50,
-    justifyContent: 'center',
-  },
-  bulkPriceRange: {
-    fontSize: 14,
-  },
-  bulkPriceValue: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  paddingHorizontal: 15,
+  marginBottom: 32,
+},
+
+tableHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  paddingVertical: 8,
+  borderBottomWidth: 1,
+  borderColor: '#ccc',
+  backgroundColor: '#f3f4f6',
+  paddingHorizontal: 8,
+},
+
+headerText: {
+  fontWeight: 'bold',
+  fontSize: 14,
+  width: '50%',
+},
+
+tableRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  paddingVertical: 8,
+  paddingHorizontal: 8,
+  borderBottomWidth: 1,
+  borderColor: '#e5e7eb',
+},
+
+rowText: {
+  fontSize: 14,
+  width: '50%',
+},
+
   addToCartContainer: {
     backgroundColor: '#0C8744',
     borderRadius: 12,
