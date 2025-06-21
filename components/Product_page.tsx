@@ -268,7 +268,7 @@ export default function ProductDetailScreen() {
       <View style={styles.productDetails}>
         <View style={styles.brandRatingContainer}>
           <Text style={styles.brandText}>
-            {widelisting.length > 0 ? widelisting[0].subcategoryName : ""}
+            {widelisting.length > 0 ? widelisting[0].name : ""}
           </Text>
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingNumber}>{productData.rating.toFixed(1)}</Text>

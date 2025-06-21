@@ -5,6 +5,7 @@ import { db, collection, getDocs } from "../firebaseConfig"; // Make sure to upd
 import { Footer } from "../components/Footer";
 import { CustomHeader } from "../components/CustomHeader";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import LiveSearchBar from "./SearchBar"; // Import LiveSearchBar component
 interface Category {
   name: string;
   image: string;
@@ -50,7 +51,9 @@ export default function CategoriesScreen() {
   );
 
   return (
+
     <View style={styles.container}>
+
       <CustomHeader backRoute="/Homepage" backTitle="Categories" />
 
       <Text style={styles.sectionTitle}>Shop by category</Text>

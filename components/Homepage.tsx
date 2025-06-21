@@ -20,6 +20,11 @@ import { db, collection, getDocs } from "../firebaseConfig";
 import { Footer } from "../components/Footer";
 import { getCurrentUserUUID } from "./auth-helper"; // ✅ Import helper function to get current user UUID
 import { useLocationStore } from "./store/useLocationStore"; // ✅ Import global store
+
+import LiveSearchBar from './SearchBar'; // Adjust the path as needed
+
+
+
 interface Category {
   name: string;
   image: string;
@@ -88,6 +93,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      
       <View style={styles.container}>
         <ScrollView>
           <View style={styles.greenBackground}>
@@ -128,13 +134,14 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchContainer}>
+            {/* <View style={styles.searchContainer}>
               <Ionicons name="search" size={20} color="green" />
               <TextInput
                 placeholder='Search for "Cement"'
                 style={styles.searchInput}
               />
-            </View>
+            </View> */}
+            <LiveSearchBar /> {/* Use the LiveSearchBar component here */}
 
             <Image
               source={require("../assets/Homepage_img.png")}
