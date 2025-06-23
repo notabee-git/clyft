@@ -14,6 +14,7 @@ import {
   Feather,
   AntDesign,
 } from "@expo/vector-icons";
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useCart } from "../context/cartContext";
@@ -23,6 +24,7 @@ import { placeOrder } from "../utils/place_orders_in_cart"; // adjust path as ne
 import { Alert } from "react-native";
 export default function PaymentScreen() {
   const { cart, totalAmount, address, clearCart } = useCart();
+  const navigation = useNavigation();
   const steps = ["Cart", "Address", "Payment"];
   const currentStep = 2;
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
@@ -57,6 +59,12 @@ export default function PaymentScreen() {
       await placeOrder(cart, user.uid, address, clearCart);
       Alert.alert("Success", "Order placed successfully!");
       // router.replace('/OrderConfirmation');
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Homepage" }], // Match your screen name
+        })
+      );
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to place order. Try again.");

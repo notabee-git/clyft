@@ -53,7 +53,7 @@ export default function RegisterForm() {
       await signInWithCredential(auth, credential);
       alert("Phone authentication successful ✅");
       checkAndCreateUser();
-      router.push("/Maps");
+      router.replace({ pathname: "/Maps", params: { from: "loginpage" } });
     } catch (err: any) {
       console.error(err);
       alert("Invalid verification code.");

@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import MapView, { Marker, Region } from "react-native-maps";
 import * as Location from "expo-location";
@@ -18,6 +19,7 @@ const GOOGLE_PLACES_API_KEY =
   Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
 
 export default function LocationPicker() {
+  const { from } = useLocalSearchParams();
   const [location, setLocation] = useState<Region | null>(null);
   const [markerPosition, setMarkerPosition] = useState<{
     latitude: number;
@@ -133,7 +135,11 @@ export default function LocationPicker() {
           onPress={() => {
             if (markerPosition) {
               setGlobalLocation(markerPosition);
-              router.push("/StoreSelectionScreen");
+              console.log(from);
+              if(from!=="Homepage") router.replace("/StoreSelectionScreen");
+              else{
+                router.back();
+              }
             }
           }}
         >

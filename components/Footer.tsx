@@ -9,9 +9,9 @@ export const Footer = () => {
 
   const isCategoriesActive = [
     "/Categories",
-    "/Product_page",         
-    "/subcategories/[categoryName]",    
-    "/widelisting/[subcategoryName]",     // <- add any others as needed
+    "/Product_page",
+    "/subcategories/[categoryName]",
+    "/widelisting/[subcategoryName]", // <- add any others as needed
   ].includes(pathname);
 
   const tabs = [
@@ -47,7 +47,11 @@ export const Footer = () => {
         <TouchableOpacity
           key={index}
           style={styles.navItem}
-          onPress={() => router.push(tab.route as any)}
+          onPress={() => {
+            if (pathname === tab.route) {
+              router.replace(tab.route as any);
+            }else router.push(tab.route as any);
+          }}
         >
           <Ionicons
             name={tab.icon}

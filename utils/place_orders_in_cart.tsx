@@ -1,14 +1,13 @@
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CartItem, Address } from '@/constants/types';
-import { router } from "expo-router";
-
+import { router } from "expo-router"; // ✅ we're using this
 const db = getFirestore();
 
 export async function placeOrder(
   cart: CartItem[],
   userId: string,
   address: Address,
-  clearCart: () => void // <-- Add this
+  clearCart: () => void
 ) {
   try {
     for (const item of cart) {
@@ -35,12 +34,10 @@ export async function placeOrder(
       console.log("✅ Order placed for:", item.product.name);
     }
 
-    // ✅ Clear cart after all orders are placed
     clearCart();
 
-    // ✅ Navigate to homepage
-    router.replace("/Homepage");
-
+    // ✅ Use router.replace to clear stack
+    router.replace("/Homepage"); // or "/home", etc.
   } catch (error) {
     console.error("❌ Error placing order:", error);
   }
