@@ -26,7 +26,8 @@ export const CustomHeader = ({
         {/* Back Section */}
         <TouchableOpacity
           style={styles.backGroup}
-          onPress={() => (backRoute ? router.push(backRoute) : router.back())}
+          // onPress={() => (backRoute ? router.push(backRoute) : router.back())}
+          onPress={()=> router.back()}
         >
           <Ionicons name="chevron-back" size={24} color="#111" />
           <Text style={styles.backTitle}>{backTitle}</Text>

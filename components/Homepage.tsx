@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -10,20 +9,17 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 
 import { db, collection, getDocs } from "../firebaseConfig";
 import { Footer } from "../components/Footer";
-import { getCurrentUserUUID } from "./auth-helper"; // ✅ Import helper function to get current user UUID
-import { useLocationStore } from "./store/useLocationStore"; // ✅ Import global store
-
-import LiveSearchBar from './SearchBar'; // Adjust the path as needed
-
-
+import { getCurrentUserUUID } from "./auth-helper";
+import { useLocationStore } from "./store/useLocationStore";
+import LiveSearchBar from "./SearchBar";
 
 interface Category {
   name: string;
@@ -31,44 +27,40 @@ interface Category {
 }
 
 const uuid = getCurrentUserUUID();
+
 export default function HomeScreen() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isvalidpincode, setisvalidpincode] = useState<boolean>(false);
+  // ✅ Refresh logic here
+  function validatePincode(postalCode: string | null | undefined): boolean {
+  const cleaned = postalCode?.replace(/\s/g, "") || "1";
+  return /^\d+$/.test(cleaned) && Number(cleaned) >= 500001 && Number(cleaned) <= 500999;
+}
 
-  useEffect(() => {
-    // Ensure user is created or checked on component mount
-    // Fetch categories from Firestore
-    const fetchCategories = async () => {
-      try {
-        const categorySnapshot = await getDocs(collection(db, "categories"));
-        const categoriesList = categorySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            name: data.name,
-            image: data.image,
-          };
-        });
-        setCategories(categoriesList);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchCategories();
-  }, []);
 
-  useEffect(() => {
-    const getAddressFromCoordinates = async () => {
-      //get global coordinates from store
+  const refreshHomepage = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch categories
+      const categorySnapshot = await getDocs(collection(db, "categories"));
+      const categoriesList = categorySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          name: data.name,
+          image: data.image,
+        };
+      });
+      setCategories(categoriesList);
+
+      // Get address from globalCoordinates
       const globalCoordinates = useLocationStore.getState().globalCoordinates;
-      if (!globalCoordinates) return;
-
-      try {
+      if (globalCoordinates) {
         const [location] = await Location.reverseGeocodeAsync({
           latitude: globalCoordinates.latitude,
           longitude: globalCoordinates.longitude,
@@ -78,22 +70,33 @@ export default function HomeScreen() {
           const address = `${location.name || ""}, ${location.city || ""}, ${
             location.postalCode || ""
           }`;
+          setisvalidpincode(validatePincode(location.postalCode));
+          console.log(isvalidpincode);
           setSelectedLocation(address.trim());
         } else {
           setSelectedLocation(null);
         }
-      } catch (error) {
-        console.error("Reverse geocoding failed:", error);
-        setSelectedLocation(null);
       }
-    };
+    } catch (err) {
+      console.error("❌ Error refreshing Homepage:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    getAddressFromCoordinates();
-  }, []);
+  // ✅ Refresh on screen focus (even on back)
+  useFocusEffect(
+    useCallback(() => {
+      console.log("🏠 Homepage focused");
+      refreshHomepage();
 
+      return () => {
+        console.log("🏃 Leaving Homepage");
+      };
+    }, [])
+  );
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
-      
       <View style={styles.container}>
         <ScrollView>
           <View style={styles.greenBackground}>
@@ -110,7 +113,10 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     onPress={() => {
                       if (!selectedLocation) {
-                        router.push("/Maps");
+                        router.push({
+                          pathname: "/Maps",
+                          params: { from: "Homepage" },
+                        });
                       } else {
                         setModalVisible(true);
                       }
@@ -134,14 +140,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color="green" />
-              <TextInput
-                placeholder='Search for "Cement"'
-                style={styles.searchInput}
-              />
-            </View> */}
-            <LiveSearchBar /> {/* Use the LiveSearchBar component here */}
+            <LiveSearchBar />
 
             <Image
               source={require("../assets/Homepage_img.png")}
@@ -153,86 +152,100 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Shop by category</Text>
+          {!isvalidpincode && (
+            <View style={{ padding: 16, alignItems: "center" }}>
+              <Text style={{ color: "red", fontSize: 16, fontWeight: "600" }}>
+                🚫 Delivery not available in this area
+              </Text>
+              <Text style={{ color: "#555", marginTop: 8 }}>
+                Please select a valid location to explore products.
+              </Text>
+            </View>
+          )}
 
-          <View style={styles.categoryContainer}>
-            {loading ? (
-              <Text>Loading categories...</Text>
-            ) : categories.length === 0 ? (
-              <Text>No categories available</Text>
-            ) : (
-              categories.slice(0, 3).map((item, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/subcategories/[categoryName]",
-                      params: { name: encodeURIComponent(item.name) },
-                    })
-                  }
-                >
-                  <View style={styles.categoryItem}>
-                    <Image
-                      source={{ uri: item.image }}
-                      style={styles.categoryImage}
-                      resizeMode="cover"
-                    />
-                    <Text style={styles.categoryText}>{item.name}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push("/Categories")}
-          >
-            <Text style={styles.text}>See all categories</Text>
-            <Feather name="chevron-right" size={18} color="#1A1A2E" />
-          </TouchableOpacity>
-
-          <Text style={styles.sectionTitle}>Bestsellers</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push("/Categories")}
-          >
-            <Text style={styles.text}>See all products</Text>
-            <Feather name="chevron-right" size={18} color="#1A1A2E" />
-          </TouchableOpacity>
+          {isvalidpincode && (
+            <>
+              <Text style={styles.sectionTitle}>Shop by category</Text>
+              <View style={styles.categoryContainer}>
+                {loading ? (
+                  <Text>Loading categories...</Text>
+                ) : categories.length === 0 ? (
+                  <Text>No categories available</Text>
+                ) : (
+                  categories.slice(0, 3).map((item, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/subcategories/[categoryName]",
+                          params: { name: encodeURIComponent(item.name) },
+                        })
+                      }
+                    >
+                      <View style={styles.categoryItem}>
+                        <Image
+                          source={{ uri: item.image }}
+                          style={styles.categoryImage}
+                          resizeMode="cover"
+                        />
+                        <Text style={styles.categoryText}>{item.name}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => router.push("/Categories")}
+              >
+                <Text style={styles.text}>See all categories</Text>
+                <Feather name="chevron-right" size={18} color="#1A1A2E" />
+              </TouchableOpacity>
+              <Text style={styles.sectionTitle}>Bestsellers</Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => router.push("/Categories")}
+              >
+                <Text style={styles.text}>See all products</Text>
+                <Feather name="chevron-right" size={18} color="#1A1A2E" />
+              </TouchableOpacity>{" "}
+            </>
+          )}
         </ScrollView>
 
-        {/* Optional Modal: If you want to show pre-defined location list */}
+        {/* Modal for current location */}
         {selectedLocation && (
           <Modal transparent visible={modalVisible} animationType="fade">
-  <TouchableOpacity
-    style={styles.modalOverlay}
-    activeOpacity={1}
-    onPressOut={() => setModalVisible(false)}
-  >
-    <View style={styles.modalCenteredView}>
-      <View style={styles.dropdown}>
-        <Text style={styles.locationInModal}>
-          📍 {selectedLocation || "No location selected"}
-        </Text>
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPressOut={() => setModalVisible(false)}
+            >
+              <View style={styles.modalCenteredView}>
+                <View style={styles.dropdown}>
+                  <Text style={styles.locationInModal}>
+                    📍 {selectedLocation || "No location selected"}
+                  </Text>
 
-        <TouchableOpacity
-          onPress={() => {
-            setModalVisible(false);
-            router.push("/Maps");
-          }}
-          style={styles.dropdownItem}
-        >
-          <Text style={styles.dropdownItemText}>Change Location</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </TouchableOpacity>
-</Modal>
-
+                  <TouchableOpacity
+                    onPress={() => {
+                      setModalVisible(false);
+                      router.push({
+                        pathname: "/Maps",
+                        params: { from: "Homepage" },
+                      });
+                    }}
+                    style={styles.dropdownItem}
+                  >
+                    <Text style={styles.dropdownItemText}>Change Location</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </Modal>
         )}
 
-        <Footer />
+        { isvalidpincode && ( <>  <Footer />  </>)}
       </View>
     </SafeAreaView>
   );
@@ -350,42 +363,42 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0, 0, 0, 0.2)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-modalCenteredView: {
-  width: '80%',
-  backgroundColor: '#fff',
-  borderRadius: 10,
-  padding: 16,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5,
-},
+  modalCenteredView: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
 
-locationInModal: {
-  fontSize: 14,
-  color: '#4b5563', // Tailwind gray-600
-  marginBottom: 10,
-  fontFamily: 'OpenSans_700Bold',
-  textAlign: 'center',
-},
+  locationInModal: {
+    fontSize: 14,
+    color: "#4b5563", // Tailwind gray-600
+    marginBottom: 10,
+    fontFamily: "OpenSans_700Bold",
+    textAlign: "center",
+  },
 
-dropdownItem: {
-  backgroundColor: '#f3f4f6',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-},
+  dropdownItem: {
+    backgroundColor: "#f3f4f6",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
 
-dropdownItemText: {
-  fontSize: 16,
-  fontFamily: 'OpenSans_700Bold',
-  color: 'black',
-},
+  dropdownItemText: {
+    fontSize: 16,
+    fontFamily: "OpenSans_700Bold",
+    color: "black",
+  },
 });

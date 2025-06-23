@@ -61,7 +61,7 @@ export default function CartScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* Go back to Homepage */}
       <TouchableOpacity
-        onPress={() => router.replace("/Homepage")}
+        onPress={() => router.back()}
         style={styles.header}
       >
         <Feather name="arrow-left" size={22} color="#222" />
