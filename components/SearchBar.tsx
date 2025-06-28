@@ -16,14 +16,24 @@ import { useRouter } from 'expo-router';
 import Fuse from 'fuse.js';
 import { fetchSearchData } from './fetchSearchData';
 import { BlurView } from 'expo-blur';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-export default function LiveSearchBar() {
-  const [query, setQuery] = useState('');
+interface LiveSearchBarProps {
+  initialValue?: string;
+  onSearch?: (query: string) => void;
+}
+
+export default function LiveSearchBar({ initialValue = '', onSearch }: LiveSearchBarProps) {
+  const [query, setQuery] = useState(initialValue);
   const [fuse, setFuse] = useState<Fuse<any> | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [focused, setFocused] = useState(false);
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    setQuery(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     const load = async () => {
@@ -38,8 +48,10 @@ export default function LiveSearchBar() {
   }, []);
 
   useEffect(() => {
+    onSearch?.(query);
+
     if (fuse && query.trim()) {
-      const searchResults = fuse.search(query).map(r => r.item);
+      const searchResults = fuse.search(query).map((r) => r.item);
       setResults(searchResults);
     } else {
       setResults([]);
@@ -50,6 +62,7 @@ export default function LiveSearchBar() {
     setQuery('');
     setFocused(false);
     Keyboard.dismiss();
+
     if (item.type === 'category') {
       router.push({
         pathname: '/subcategories/[categoryName]',
@@ -78,6 +91,20 @@ export default function LiveSearchBar() {
     }
   };
 
+  const handleSearchIconClick = () => {
+    if (!query.trim()) return;
+
+    router.push({
+      pathname: '/widelistingSearchResults',
+      params: {
+        query: encodeURIComponent(query),
+      },
+    });
+
+    Keyboard.dismiss();
+    setFocused(false);
+  };
+
   return (
     <View style={{ zIndex: 9000, position: 'relative' }}>
       <View style={styles.searchContainer}>
@@ -90,9 +117,15 @@ export default function LiveSearchBar() {
           }}
           onFocus={() => setFocused(true)}
           placeholder="Search for items..."
-          style={styles.input}
+          style={[styles.input]}
           autoFocus={false}
         />
+        <TouchableOpacity
+          style={styles.searchIconContainer}
+          onPress={handleSearchIconClick}
+        >
+          <Icon name="search" size={20} color="#555" />
+        </TouchableOpacity>
       </View>
 
       <Modal
@@ -124,6 +157,12 @@ export default function LiveSearchBar() {
               placeholder="Search for items..."
               style={styles.input}
             />
+            <TouchableOpacity
+              style={styles.searchIconContainerOverlay}
+              onPress={handleSearchIconClick}
+            >
+              <Icon name="search" size={20} color="#555" />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.resultBox}>
@@ -163,20 +202,31 @@ const styles = StyleSheet.create({
     margin: 5,
     zIndex: 2,
   },
-//   overlay should be positined above the seach bar but same dimensions
-
   searchContainerOverlay: {
     paddingHorizontal: 20,
     paddingVertical: 25,
     marginTop: Platform.OS === 'android' ? 40 : 60,
+    position: 'relative',
   },
   input: {
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 12,
     fontSize: 16,
     backgroundColor: '#fff',
+  },
+  searchIconContainer: {
+    position: 'absolute',
+    right: 15,
+    top: 12,
+    zIndex: 3,
+  },
+  searchIconContainerOverlay: {
+    position: 'absolute',
+    right: 30,
+    top: 37,
+    zIndex: 3,
   },
   fullscreenContainer: {
     ...StyleSheet.absoluteFillObject,
