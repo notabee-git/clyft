@@ -7,8 +7,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  BackHandler,
 } from "react-native";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
@@ -26,6 +27,15 @@ export default function RegisterForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationId, setVerificationId] = useState("");
   const [code, setCode] = useState("");
+
+  // 🔒 Disable Android back button on this screen
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+      return true; // This disables the back button
+    });
+
+    return () => backHandler.remove(); // cleanup when component unmounts
+  }, []);
 
   const sendVerification = async () => {
     if (!phoneNumber.match(/^\+\d{10,}$/)) {
@@ -53,7 +63,7 @@ export default function RegisterForm() {
       await signInWithCredential(auth, credential);
       alert("Phone authentication successful ✅");
       checkAndCreateUser();
-      router.replace({ pathname: "/Maps", params: { from: "loginpage" } });
+      router.replace({ pathname: "/Maps", params: { from: "loginpage" } }); // ⬅️ navigate without back option
     } catch (err: any) {
       console.error(err);
       alert("Invalid verification code.");

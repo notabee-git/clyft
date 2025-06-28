@@ -18,6 +18,43 @@ type ScreenName = '/your-orders' | '/Saved-Address' | '/profile' | '/help-and-su
 type FeatherIconName = keyof typeof Feather.glyphMap;
 
 
+const LogoutConfirmationModal: React.FC<{
+  visible: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ visible, onConfirm, onCancel }) => {
+  return (
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <TouchableOpacity
+        style={logoutStyles.backdrop}
+        activeOpacity={1}
+        onPress={onCancel}
+      >
+        <View style={logoutStyles.centeredView}>
+          <TouchableOpacity activeOpacity={1} style={logoutStyles.modalView}>
+            <Text style={logoutStyles.title}>Are you sure you want to log out?</Text>
+
+            <TouchableOpacity onPress={onConfirm} style={logoutStyles.logoutButton}>
+              <Text style={logoutStyles.logoutText}>Log Out</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={onCancel} style={logoutStyles.cancelButton}>
+              <Text style={logoutStyles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
+
+
+
 // Profile Access Modal Component
 const ProfileAccessModal: React.FC<{
   visible: boolean;
@@ -200,9 +237,31 @@ export default function AccountScreen() {
   const auth = getAuth();
   const db = getFirestore();
 
-
   const [showMoreLanguages, setShowMoreLanguages] = useState(false);
   const [showProfileAccess, setShowProfileAccess] = useState(false);
+
+    const [logoutVisible, setLogoutVisible] = useState(false);
+
+  const handleLogoutPress = () => {
+    setLogoutVisible(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    try {
+      await auth.signOut();
+      setLogoutVisible(false);
+      router.replace('/RegisterScreen' as any);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutVisible(false);
+  };
+
+
+
 
   // Menu items for "Your Information" - now with proper typing
   const yourInfoItems: { icon: FeatherIconName; text: string; route: ScreenName }[] = [
@@ -264,6 +323,17 @@ export default function AccountScreen() {
   const handleCloseProfileAccess = () => {
     setShowProfileAccess(false);
   };
+
+  const handleLogout = async () => {
+  try {
+    await auth.signOut();
+
+    // Replaces current stack so user can't go back to account page
+    router.replace('/RegisterScreen' as any); // ✅ replace with your actual login route
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -405,9 +475,16 @@ export default function AccountScreen() {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutPress}>
+        <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        visible={logoutVisible}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -428,6 +505,65 @@ export default function AccountScreen() {
 
 // Note: You'll need to add the StyleSheet definitions for the styles used above
 // The modalStyles and styles objects are referenced but not defined in the original code
+const logoutStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centeredView: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 24,
+  },
+  modalView: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    width: '100%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#111',
+  },
+  logoutButton: {
+    backgroundColor: '#ff3b30',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: '#000',
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  cancelText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+});
+
+
 
 const styles = StyleSheet.create({
   container: {
