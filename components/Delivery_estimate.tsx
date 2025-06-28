@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   FlatList,
 } from "react-native";
-import { Feather, AntDesign } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Address } from "@/constants/types";
 import { useCart } from "@/context/cartContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function EstimateScreen() {
   const router = useRouter();
@@ -23,44 +23,52 @@ export default function EstimateScreen() {
   const [loading, setLoading] = useState(true);
   const { cart, address, setAddress } = useCart();
   const steps = ["Cart", "Address", "Payment"];
-  const currentStep = 1; // 0 = Cart, 1 = Address, 2 = Payment
+  const currentStep = 1;
   const db = getFirestore();
   const auth = getAuth();
 
+  // ✅ Sync temp_address with latest context value
   useEffect(() => {
     if (address) {
       settempAddress(address);
       setLoading(false);
-      return;
     }
-    const fetchUserAddress = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          console.log("No user logged in");
-          return;
-        }
+  }, [address]);
 
-        const userDocRef = doc(db, "Users", user.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          const addressinfo = userData.address[0] || [];
-          console.log("Fetched address:", addressinfo);
-          setAddress(addressinfo);
-          settempAddress(addressinfo);
-        } else {
-          console.log("User document does not exist");
-        }
-      } catch (error) {
-        console.error("Failed to fetch address:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // ✅ Fetch on screen focus if no address is loaded yet
+  useFocusEffect(
+    useCallback(() => {
+      if (address) return;
 
-    fetchUserAddress();
-  }, []);
+      const fetchUserAddress = async () => {
+        setLoading(true);
+        try {
+          const user = auth.currentUser;
+          if (!user) {
+            console.log("No user logged in");
+            return;
+          }
+
+          const userDocRef = doc(db, "Users", user.uid);
+          const docSnap = await getDoc(userDocRef);
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            const addressinfo = userData.address[0] || [];
+            console.log("Fetched address:", addressinfo);
+            setAddress(addressinfo);
+          } else {
+            console.log("User document does not exist");
+          }
+        } catch (error) {
+          console.error("Failed to fetch address:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchUserAddress();
+    }, [address])
+  );
 
   if (loading) {
     return (
@@ -74,143 +82,133 @@ export default function EstimateScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 32, backgroundColor: "#fff" }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace("/Cart")}>
-            <Feather name="arrow-left" size={22} color="#222" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Address</Text>
-        </View>
+      <FlatList
+        data={cart}
+        keyExtractor={(item, index) => item.product.name + index}
+        renderItem={({ item }) => (
+          <View style={styles.deliveryItem}>
+            <Image
+              source={{
+                uri: item.product.image || "https://via.placeholder.com/100",
+              }}
+              style={styles.deliveryItemImage}
+            />
+            <View style={styles.deliveryDetails}>
+              <Text style={styles.deliveryEstimateText}>
+                Estimated delivery by{" "}
+                <Text style={styles.deliveryDate}>{"XXXX"}</Text>
+              </Text>
+            </View>
+          </View>
+        )}
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.replace("/Cart")}>
+                <Feather name="arrow-left" size={22} color="#222" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Address</Text>
+            </View>
 
-        {/* Progress Bar */}
-        <View style={styles.stepper}>
-                {steps.map((step, index) => {
-                  const isCompleted = index < currentStep;
-                  const isActive = index === currentStep;
-        
-                  return (
-                    <React.Fragment key={step}>
-                      {/* Dot */}
+            {/* Stepper */}
+            <View style={styles.stepper}>
+              {steps.map((step, index) => {
+                const isCompleted = index < currentStep;
+                const isActive = index === currentStep;
+
+                return (
+                  <React.Fragment key={step}>
+                    <View
+                      style={[
+                        styles.dot,
+                        isCompleted && styles.dotCompleted,
+                        isActive && styles.dotActive,
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.label,
+                        isCompleted || isActive
+                          ? styles.labelActive
+                          : styles.labelInactive,
+                      ]}
+                    >
+                      {step}
+                    </Text>
+                    {index < steps.length - 1 && (
                       <View
                         style={[
-                          styles.dot,
-                          isCompleted && styles.dotCompleted,
-                          isActive && styles.dotActive,
+                          styles.line,
+                          index < currentStep
+                            ? styles.lineActive
+                            : styles.lineInactive,
                         ]}
                       />
-                      {/* Label */}
-                      <Text
-                        style={[
-                          styles.label,
-                          isCompleted || isActive
-                            ? styles.labelActive
-                            : styles.labelInactive,
-                        ]}
-                      >
-                        {step}
-                      </Text>
-        
-                      {/* Line */}
-                      {index < steps.length - 1 && (
-                        <View
-                          style={[
-                            styles.line,
-                            index < currentStep
-                              ? styles.lineActive
-                              : styles.lineInactive,
-                          ]}
-                        />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </View>
-
-        {/* Address Block */}
-        <View style={styles.addressListContainer}>
-          <View style={styles.addressDetailsContainer}>
-            <View style={styles.addressHeaderRow}>
-              <Text style={styles.addressName}>{temp_address?.fullname}</Text>
-              <TouchableOpacity onPress={() => router.push("/Select_address")}>
-                <Text style={styles.changeButton}>Change</Text>
-              </TouchableOpacity>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </View>
 
-            {/* Display full address lines */}
-            <Text style={styles.addressLine}>{temp_address?.flatBuilding}</Text>
-            <Text style={styles.addressLine}>{temp_address?.locality}</Text>
-            <Text
-              style={styles.addressLine}
-            >{`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}</Text>
-
-            {/* Optional landmark if present */}
-            {temp_address?.landmark ? (
-              <Text style={styles.addressLine}>
-                Landmark: {temp_address.landmark}
-              </Text>
-            ) : null}
-
-            {/* Address Type (like Home / Site) */}
-            {temp_address?.addressType ? (
-              <Text style={styles.addressLine}>
-                Type: {temp_address.addressType}
-              </Text>
-            ) : null}
-
-            {/* Mobile number */}
-            <View style={styles.mobileContainer}>
-              <Text style={styles.mobileLabel}>Mobile: </Text>
-              <Text style={styles.mobileNumber}>{temp_address?.mobile}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.cardSeparator} />
-
-        {/* Delivery Estimates */}
-          <View style={styles.deliveryEstimatesContainer}>
-            <Text style={styles.deliveryEstimatesTitle}>
-              Delivery Estimates
-            </Text>
-
-            <FlatList
-              data={cart}
-              keyExtractor={(item, index) => item.product.name + index}
-              renderItem={({ item }) => (
-                <View style={styles.deliveryItem}>
-                  <Image
-                    source={{
-                      uri:
-                        item.product.image || "https://via.placeholder.com/100",
-                    }}
-                    style={styles.deliveryItemImage}
-                  />
-                  <View style={styles.deliveryDetails}>
-                    <Text style={styles.deliveryEstimateText}>
-                      Estimated delivery by{" "}
-                      <Text style={styles.deliveryDate}>{"XXXX"}</Text>
-                    </Text>
-                  </View>
+            {/* Address Block */}
+            <View style={styles.addressListContainer}>
+              <View style={styles.addressDetailsContainer}>
+                <View style={styles.addressHeaderRow}>
+                  <Text style={styles.addressName}>
+                    {temp_address?.fullname}
+                  </Text>
+                  <TouchableOpacity onPress={() => router.push("/Select_address")}>
+                    <Text style={styles.changeButton}>Change</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
-              showsVerticalScrollIndicator={false}
-            />
-          </View>
+                <Text style={styles.addressLine}>
+                  {temp_address?.flatBuilding}
+                </Text>
+                <Text style={styles.addressLine}>
+                  {temp_address?.locality}
+                </Text>
+                <Text style={styles.addressLine}>
+                  {`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}
+                </Text>
+                {temp_address?.landmark && (
+                  <Text style={styles.addressLine}>
+                    Landmark: {temp_address.landmark}
+                  </Text>
+                )}
+                {temp_address?.addressType && (
+                  <Text style={styles.addressLine}>
+                    Type: {temp_address.addressType}
+                  </Text>
+                )}
+                <View style={styles.mobileContainer}>
+                  <Text style={styles.mobileLabel}>Mobile: </Text>
+                  <Text style={styles.mobileNumber}>
+                    {temp_address?.mobile}
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-        {/* Bottom Button */}
-        <TouchableOpacity
-          style={styles.deliverHereButton}
-          onPress={() => router.push("/payment")}
-        >
-          <Text style={styles.deliverHereButtonText}>DELIVER HERE</Text>
-        </TouchableOpacity>
-      </ScrollView>
+            <View style={styles.cardSeparator} />
+            <Text style={styles.deliveryEstimatesTitle}>Delivery Estimates</Text>
+          </>
+        }
+        ListFooterComponent={
+          <TouchableOpacity
+            style={styles.deliverHereButton}
+            onPress={() => router.push("/payment")}
+          >
+            <Text style={styles.deliverHereButtonText}>DELIVER HERE</Text>
+          </TouchableOpacity>
+        }
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   stepper: {
@@ -370,6 +368,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#222",
     marginBottom: 12,
+    marginLeft:16,
   },
   deliveryItem: {
     flexDirection: "row",
@@ -379,6 +378,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
     paddingBottom: 12,
     backgroundColor: "#fff",
+    marginLeft:12,
   },
   deliveryItemImage: {
     width: 70,
