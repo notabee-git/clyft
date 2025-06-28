@@ -131,7 +131,7 @@ export default function SelectAddressScreen() {
       <ScrollView>{renderAddresses()}</ScrollView>
 
       {/* Deliver Here Button */}
-      <TouchableOpacity style={styles.deliverBtn} onPress={() => {router.replace('/Delivery_estimate');}}>
+      <TouchableOpacity style={styles.deliverBtn} onPress={() => {router.back();}}>
         <Text style={styles.deliverBtnText}>DELIVER HERE</Text>
       </TouchableOpacity>
     </SafeAreaView>

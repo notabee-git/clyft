@@ -11,7 +11,7 @@ import {
   Clipboard,
   ActivityIndicator,
 } from "react-native";
-import { collection, query, where, getDocs,doc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc } from "firebase/firestore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,6 +31,7 @@ interface Product {
   rating: number;
   quantity: number; // Optional, if you want to track quantity
   isDelivered: boolean;
+  status: string;
 }
 
 interface OrderData {
@@ -53,81 +54,81 @@ interface OrderData {
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
-const { orderId } = useLocalSearchParams();
+  const { orderId } = useLocalSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [productRating, setProductRating] = useState<number>(0);
 
-const [loading, setLoading] = useState(true);
-const [orderData, setOrderData] = useState<OrderData | null>(null);
-const [error, setError] = useState<string | null>(null);
-const [productRating, setProductRating] = useState<number>(0);
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        if (!orderId) {
+          setError("Invalid order ID");
+          setLoading(false);
+          return;
+        }
 
-useEffect(() => {
-  const fetchOrder = async () => {
-    try {
-      if (!orderId) {
-        setError("Invalid order ID");
+        // Query the 'orders' collection for documents where 'OrderID' matches 'orderId'
+        const ordersRef = collection(db, "orders");
+        const productRef = collection(db, "widelisting");
+        const q = query(ordersRef, where("OrderID", "==", orderId));
+        const querySnapshot = await getDocs(q);
+        const docSnap = querySnapshot.docs[0];
+        const data = docSnap.data();
+        const q2 = query(productRef, where("name", "==", data.item));
+        const querySnapshot2 = await getDocs(q2);
+        const docSnap2 = querySnapshot2.docs[0];
+        const ProdcutData = docSnap2.data();
+        if (querySnapshot.empty) {
+          setError("Order not found");
+          setLoading(false);
+          return;
+        }
+
+        // Assuming OrderID is unique, get the first document
+        // You can replace this hardcoded product & billing info with fetchedData properties
+        setOrderData({
+          orderId: data.OrderID, // Note: make sure Firestore field name is 'OrderID' (case-sensitive)
+          product: {
+            id: "1",
+            name: data.item,
+            dimensions: data.size,
+            price: data.total,
+            mrp: 72000.0,
+            image: { uri: ProdcutData.image }, // Fallback image
+            canExchange: false,
+            canReturn: false,
+            deliveryDate: "Tue, 27th May",
+            rating: 0,
+            isDelivered: data.status == "delivered",
+            quantity: data.quantity,
+            status: data.status,
+          },
+          billSummary: {
+            total: data.total,
+            gst: data.GST,
+            discount: 0,
+            deliveryFee: data.delivery_fee,
+            platformFee: 2,
+            grandTotal: data.total,
+          },
+          orderDetails: {
+            paymentMethod: "UPI",
+            deliveryAddress: `${data.Address.flatBuilding}\n${data.Address.locality}\n${data.Address.city}, ${data.Address.state}, ${data.Address.pincode}`,
+            orderPlaced: data.createdAt.toDate().toLocaleString(), // Assuming createdAt is a Firestore Timestamp
+          },
+        });
+      } catch (e) {
+        setError("Failed to fetch order");
+        console.error(e);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      // Query the 'orders' collection for documents where 'OrderID' matches 'orderId'
-      const ordersRef = collection(db, "orders");
-      const productRef = collection(db, "widelisting");
-      const q = query(ordersRef, where("OrderID", "==", orderId));
-      const querySnapshot = await getDocs(q);
-      const docSnap = querySnapshot.docs[0];
-      const data = docSnap.data();
-      const q2 = query(productRef, where("name","==",data.item));
-      const querySnapshot2 = await getDocs(q2);
-      const docSnap2 = querySnapshot2.docs[0];
-      const ProdcutData = docSnap2.data();
-      if (querySnapshot.empty) {
-        setError("Order not found");
-        setLoading(false);
-        return;
-      }
-
-      // Assuming OrderID is unique, get the first document
-      // You can replace this hardcoded product & billing info with fetchedData properties
-      setOrderData({
-        orderId: data.OrderID,  // Note: make sure Firestore field name is 'OrderID' (case-sensitive)
-        product: {
-          id: "1",
-          name: data.item,
-          dimensions: data.size,
-          price: data.total,
-          mrp: 72000.0,
-          image: { uri: ProdcutData.image }, // Fallback image
-          canExchange: true,
-          canReturn: true,
-          deliveryDate: "Tue, 27th May",
-          rating: 0,
-          isDelivered: data.status=='delivered',
-          quantity: data.quantity,
-        },
-        billSummary: {
-          total: data.total,
-          gst: data.GST,
-          discount: 0,
-          deliveryFee: data.delivery_fee,
-          platformFee: 2,
-          grandTotal: data.total,
-        },
-        orderDetails: {
-          paymentMethod: "UPI",
-          deliveryAddress: `${data.Address.flatBuilding}\n${data.Address.locality}\n${data.Address.city}, ${data.Address.state}, ${data.Address.pincode}`,
-          orderPlaced: data.createdAt.toDate().toLocaleString(), // Assuming createdAt is a Firestore Timestamp
-        },
-      });
-    } catch (e) {
-      setError("Failed to fetch order");
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchOrder();
-}, [orderId]);
+    fetchOrder();
+  }, [orderId]);
 
   // Set initial productRating once orderData loads
   useEffect(() => {
@@ -176,28 +177,64 @@ useEffect(() => {
     return (
       <View key={product.id} style={styles.productCard}>
         {/* Product rendering code remains unchanged */}
-        <View style={styles.deliveredBadge}>
+        <TouchableOpacity
+          style={styles.deliveredBadge}
+          onPress={() => {
+            if (product.status !== "cancelled") {
+              router.push({
+                pathname: "/Shipment-Tracking",
+                params: { orderId: orderId, imageid: product.image?.uri ?? "" },
+              });
+            }
+          }}
+        >
           <Ionicons
-            name={product.isDelivered ? "cube-outline" : "car-outline"}
+            name={
+              product.status === "delivered"
+                ? "cube-outline"
+                : product.status === "cancelled"
+                ? "close-circle-outline"
+                : "car-outline"
+            }
             size={30}
-            color={product.isDelivered ? "#000" : "#000"}
+            color={
+              product.status === "delivered"
+                ? "#038025"
+                : product.status === "cancelled"
+                ? "#d00"
+                : "#FF8C00"
+            }
           />
+
           <View style={styles.deliveredTextContainer}>
             <Text
               style={[
                 styles.deliveredText,
-                { color: product.isDelivered ? "#038025" : "#FF8C00" },
+                {
+                  color:
+                    product.status === "delivered"
+                      ? "#038025"
+                      : product.status === "cancelled"
+                      ? "#d00"
+                      : "#FF8C00",
+                },
               ]}
             >
-              {product.isDelivered ? "Delivered" : "In Transit"}
+              {/* Capitalize status text */}
+              {product.status
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
             </Text>
+
             <Text style={styles.deliveryDate}>
-              {product.isDelivered
-                ? `On ${product.deliveryDate}`
+              {product.status === "delivered"
+                ? `Delivered on ${product.deliveryDate}`
+                : product.status === "cancelled"
+                ? `Cancelled`
                 : `Expected ${product.deliveryDate}`}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.productInfo}>
           <Image source={product.image} style={styles.productImage} />
@@ -241,7 +278,9 @@ useEffect(() => {
           </View>
 
           <View style={styles.ratingSection}>
-            <View style={styles.starsContainer}>{renderStars(currentRating)}</View>
+            <View style={styles.starsContainer}>
+              {renderStars(currentRating)}
+            </View>
             <View style={styles.ratingTextContainer}>
               <Text style={styles.rateText}>Rate & Review</Text>
               {hasRating && (
@@ -274,7 +313,12 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color="#000" />
       </SafeAreaView>
     );
@@ -282,9 +326,17 @@ useEffect(() => {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <Text style={{ color: "red", fontSize: 16 }}>{error}</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginTop: 20 }}
+        >
           <Text style={{ color: "#007bff" }}>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -300,13 +352,19 @@ useEffect(() => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{orderData.orderId}</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         {renderProduct(orderData.product)}
 
         {/* Bill Summary */}
@@ -318,23 +376,33 @@ useEffect(() => {
 
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Total</Text>
-            <Text style={styles.billValue}>₹{orderData.billSummary.total.toFixed(2)}</Text>
+            <Text style={styles.billValue}>
+              ₹{orderData.billSummary.total.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>GST</Text>
-            <Text style={styles.billValue}>₹{orderData.billSummary.gst.toFixed(2)}</Text>
+            <Text style={styles.billValue}>
+              ₹{orderData.billSummary.gst.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Discount</Text>
-            <Text style={styles.billValue}>-₹{orderData.billSummary.discount.toFixed(2)}</Text>
+            <Text style={styles.billValue}>
+              -₹{orderData.billSummary.discount.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Delivery Fee</Text>
-            <Text style={styles.billValue}>₹{orderData.billSummary.deliveryFee.toFixed(2)}</Text>
+            <Text style={styles.billValue}>
+              ₹{orderData.billSummary.deliveryFee.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Platform Fee</Text>
-            <Text style={styles.billValue}>₹{orderData.billSummary.platformFee.toFixed(2)}</Text>
+            <Text style={styles.billValue}>
+              ₹{orderData.billSummary.platformFee.toFixed(2)}
+            </Text>
           </View>
 
           <View style={styles.billTotalRow}>
@@ -348,24 +416,37 @@ useEffect(() => {
         {/* Order Details */}
         <View style={styles.orderDetails}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={20} color="#000" />
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color="#000"
+            />
             <Text style={styles.sectionTitle}>Order Details</Text>
           </View>
 
           <View style={styles.orderDetailRow}>
             <Text style={styles.orderDetailLabel}>Payment Method</Text>
-            <Text style={styles.orderDetailValue}>{orderData.orderDetails.paymentMethod}</Text>
+            <Text style={styles.orderDetailValue}>
+              {orderData.orderDetails.paymentMethod}
+            </Text>
           </View>
           <View style={styles.orderDetailRow}>
             <Text style={styles.orderDetailLabel}>Delivery Address</Text>
-            <Text style={styles.orderDetailValue}>{orderData.orderDetails.deliveryAddress}</Text>
+            <Text style={styles.orderDetailValue}>
+              {orderData.orderDetails.deliveryAddress}
+            </Text>
           </View>
           <View style={styles.orderDetailRow}>
             <Text style={styles.orderDetailLabel}>Order Placed</Text>
-            <Text style={styles.orderDetailValue}>{orderData.orderDetails.orderPlaced}</Text>
+            <Text style={styles.orderDetailValue}>
+              {orderData.orderDetails.orderPlaced}
+            </Text>
           </View>
 
-          <TouchableOpacity onPress={copyOrderId} style={styles.copyOrderIdButton}>
+          <TouchableOpacity
+            onPress={copyOrderId}
+            style={styles.copyOrderIdButton}
+          >
             <Text style={styles.copyOrderIdText}>Copy Order ID</Text>
           </TouchableOpacity>
         </View>
@@ -466,6 +547,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     color: "#999",
     maxWidth: "60%",
+    paddingHorizontal: 10,
   },
   priceContainer: {
     flexDirection: "row",

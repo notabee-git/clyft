@@ -3,10 +3,10 @@
     "strict": true,
     "jsx": "react-native",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+      "@/*": ["./*"]
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "**/*.ts",
@@ -15,5 +15,5 @@
     "env.d.ts",
     "expo-env.d.ts"
   ],
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base.json"
 }

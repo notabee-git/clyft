@@ -18,7 +18,7 @@ export default function CartScreen() {
   const router = useRouter();
   const steps = ["Cart", "Address", "Payment"];
   const currentStep = 0; // 0 = Cart, 1 = Address, 2 = Payment
-  const { cart, incrementItem, decrementItem, removeItem } = useCart();
+  const { cart, incrementItem, decrementItem, removeItem, address } = useCart();
 
   // Calculate billing breakdown
   const { Total, GST, Discount, DeliveryFee, PlatformFee, GrandTotal } =
@@ -56,7 +56,7 @@ export default function CartScreen() {
         GrandTotal: grandTotal,
       };
     }, [cart]);
-
+    // console.log(address);
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* Go back to Homepage */}
@@ -111,7 +111,7 @@ export default function CartScreen() {
         })}
       </View>
       {/* Delivery address section */}
-      <View style={styles.addressContainer}>
+      {/* <View style={styles.addressContainer}>
         <View style={styles.addressRow}>
           <Text>
             Deliver to: <Text style={styles.addressName}>Sathwik, 500019</Text>
@@ -120,11 +120,11 @@ export default function CartScreen() {
             <Text style={styles.changeText}>Change</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </View> */}
       {/* Coupons & Offers section */}
       <TouchableOpacity style={styles.couponButton}>
-        <Feather name="gift" size={18} color="#0C8744" />
-        <Text style={styles.couponButtonText}> Coupons & Offers</Text>
+        <Feather name="shopping-cart" size={18} color="#0C8744" />
+        <Text style={styles.couponButtonText}> Items in cart</Text>
       </TouchableOpacity>
       {/* Cart Items list */}
       {cart.length > 0 ? (

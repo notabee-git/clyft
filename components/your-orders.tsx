@@ -24,13 +24,19 @@ const db = getFirestore();
 
 type Order = {
   id: string;
-  status: "delivered" | "pending" | "cancelled";
+  status:
+    | "delivered"
+    | "pending"
+    | "cancelled"
+    | "order_ready"
+    | "out_for_delivery"
+    | "shipped";
   placedDate: string;
   amount: number;
   products: Product[];
   quantity: number; // Assuming you want to keep track of the product quantity
-  size:string; // Assuming you want to keep track of the product size
-  name:string; // Assuming you want to keep track of the product name
+  size: string; // Assuming you want to keep track of the product size
+  name: string; // Assuming you want to keep track of the product name
 };
 
 type Product = {
@@ -40,19 +46,21 @@ type Product = {
 const YourOrdersScreen = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-
   const fetchOrders = async () => {
     try {
       const uuid = await getCurrentUserUUID();
       if (!uuid) return;
 
-      const ordersQuery = query(collection(db, "orders"), where("UUID", "==", uuid));
+      const ordersQuery = query(
+        collection(db, "orders"),
+        where("UUID", "==", uuid)
+      );
       const orderSnapshot = await getDocs(ordersQuery);
       const wideListingSnapshot = await getDocs(collection(db, "widelisting"));
 
       // Build a map of product name → image
       const productImageMap: Record<string, string> = {};
-      wideListingSnapshot.forEach(doc => {
+      wideListingSnapshot.forEach((doc) => {
         const data = doc.data();
         productImageMap[data.name] = data.image; // assuming `image` is a URL
       });
@@ -67,12 +75,18 @@ const YourOrdersScreen = () => {
 
         return {
           id: data.OrderID,
-          status: data.status as "delivered" | "pending" | "cancelled",
+          status: data.status as
+            | "delivered"
+            | "pending"
+            | "cancelled"
+            | "order_ready"
+            | "out_for_delivery"
+            | "shipped",
           placedDate: data.createdAt.toDate().toLocaleString(),
           amount: data.total,
           name: data.item,
-          size:data.size,
-          quantity: data.quantity,// Assuming `data.item` is the product name
+          size: data.size,
+          quantity: data.quantity, // Assuming `data.item` is the product name
           products: [{ image: productImage }],
         };
       });
@@ -111,59 +125,71 @@ const YourOrdersScreen = () => {
             style={styles.productImage}
           />
         ))}
-        
+
         {showMoreIndicator && <Text style={styles.moreText}>+More</Text>}
       </View>
     );
   };
+  const renderOrderItem = (order: Order) => {
+    const statusLevels = [
+      "pending",
+      "order_ready",
+      "shipped",
+      "out_for_delivery",
+      "delivered",
+    ];
 
-  const renderOrderItem = (order: Order) => (
-    <TouchableOpacity
-      key={order.id}
-      style={styles.orderCard}
-      onPress={() => handleOrderPress(order.id)}
-      activeOpacity={0.7}
-    >
-      {renderProductImages(order.products)}
+    return (
+      <TouchableOpacity
+        key={order.id}
+        style={styles.orderCard}
+        onPress={() => handleOrderPress(order.id)}
+        activeOpacity={0.7}
+      >
+        {renderProductImages(order.products)}
 
-      <View style={styles.Detailsrow}>
-        <View style={styles.orderDetails}>
+        <View style={styles.Detailsrow}>
+          <View style={styles.orderDetails}>
             <Text>{order.name}</Text>
-            <Text style={{ fontSize: 12, color: "#666" }}>{order.size} , {order.quantity} pcs</Text>
-          <View style={styles.orderHeader}>
-            <Text style={styles.orderStatus}>
-              {order.status === "cancelled"
-                ? "Order Cancelled"
-                : order.status === "pending"
-                ? "Order In Process"
-                : "Order Delivered"}
+            <Text style={{ fontSize: 12, color: "#666" }}>
+              {order.size}, {order.quantity} pcs
             </Text>
 
-            <Ionicons
-              name={
-                order.status === "delivered"
-                  ? "checkmark-circle"
-                  : order.status === "pending"
-                  ? "reload-circle"
-                  : "close-circle"
-              }
-              size={16}
-              color={
-                order.status === "delivered"
-                  ? "#4CAF50"
-                  : order.status === "pending"
-                  ? "#2196F3"
-                  : "#F44336"
-              }
-              style={styles.statusIcon}
-            />
+            <View style={styles.orderHeader}>
+              <Text style={styles.orderStatus}>
+                {order.status
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+              </Text>
+
+              <Ionicons
+                name={
+                  order.status === "delivered"
+                    ? "checkmark-circle"
+                    : order.status === "cancelled"
+                    ? "close-circle"
+                    : "reload-circle"
+                }
+                size={16}
+                color={
+                  order.status === "delivered"
+                    ? "#4CAF50"
+                    : order.status === "cancelled"
+                    ? "#F44336"
+                    : "#2196F3"
+                }
+                style={styles.statusIcon}
+              />
+            </View>
+
+            <Text style={styles.orderDate}>Placed on {order.placedDate}</Text>
           </View>
-          <Text style={styles.orderDate}>Placed on {order.placedDate}</Text>
+
+          <Text style={styles.orderAmount}>₹ {order.amount.toFixed(2)}</Text>
         </View>
-        <Text style={styles.orderAmount}>₹ {order.amount.toFixed(2)}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -204,7 +230,6 @@ const YourOrdersScreen = () => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
