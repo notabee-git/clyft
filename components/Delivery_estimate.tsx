@@ -82,133 +82,136 @@ export default function EstimateScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <FlatList
-        data={cart}
-        keyExtractor={(item, index) => item.product.name + index}
-        renderItem={({ item }) => (
-          <View style={styles.deliveryItem}>
-            <Image
-              source={{
-                uri: item.product.image || "https://via.placeholder.com/100",
-              }}
-              style={styles.deliveryItemImage}
-            />
-            <View style={styles.deliveryDetails}>
-              <Text style={styles.deliveryEstimateText}>
-                Estimated delivery by{" "}
-                <Text style={styles.deliveryDate}>{"XXXX"}</Text>
-              </Text>
-            </View>
-          </View>
-        )}
-        ListHeaderComponent={
-          <>
-            {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => router.replace("/Cart")}>
-                <Feather name="arrow-left" size={22} color="#222" />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Address</Text>
-            </View>
-
-            {/* Stepper */}
-            <View style={styles.stepper}>
-              {steps.map((step, index) => {
-                const isCompleted = index < currentStep;
-                const isActive = index === currentStep;
-
-                return (
-                  <React.Fragment key={step}>
-                    <View
-                      style={[
-                        styles.dot,
-                        isCompleted && styles.dotCompleted,
-                        isActive && styles.dotActive,
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.label,
-                        isCompleted || isActive
-                          ? styles.labelActive
-                          : styles.labelInactive,
-                      ]}
-                    >
-                      {step}
-                    </Text>
-                    {index < steps.length - 1 && (
-                      <View
-                        style={[
-                          styles.line,
-                          index < currentStep
-                            ? styles.lineActive
-                            : styles.lineInactive,
-                        ]}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </View>
-
-            {/* Address Block */}
-            <View style={styles.addressListContainer}>
-              <View style={styles.addressDetailsContainer}>
-                <View style={styles.addressHeaderRow}>
-                  <Text style={styles.addressName}>
-                    {temp_address?.fullname}
-                  </Text>
-                  <TouchableOpacity onPress={() => router.push("/Select_address")}>
-                    <Text style={styles.changeButton}>Change</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.addressLine}>
-                  {temp_address?.flatBuilding}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={cart}
+          keyExtractor={(item, index) => item.product.name + index}
+          renderItem={({ item }) => (
+            <View style={styles.deliveryItem}>
+              <Image
+                source={{
+                  uri: item.product.image || "https://via.placeholder.com/100",
+                }}
+                style={styles.deliveryItemImage}
+              />
+              <View style={styles.deliveryDetails}>
+                <Text style={styles.deliveryEstimateText}>
+                  Estimated delivery by{" "}
+                  <Text style={styles.deliveryDate}>{"XXXX"}</Text>
                 </Text>
-                <Text style={styles.addressLine}>
-                  {temp_address?.locality}
-                </Text>
-                <Text style={styles.addressLine}>
-                  {`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}
-                </Text>
-                {temp_address?.landmark && (
-                  <Text style={styles.addressLine}>
-                    Landmark: {temp_address.landmark}
-                  </Text>
-                )}
-                {temp_address?.addressType && (
-                  <Text style={styles.addressLine}>
-                    Type: {temp_address.addressType}
-                  </Text>
-                )}
-                <View style={styles.mobileContainer}>
-                  <Text style={styles.mobileLabel}>Mobile: </Text>
-                  <Text style={styles.mobileNumber}>
-                    {temp_address?.mobile}
-                  </Text>
-                </View>
               </View>
             </View>
+          )}
+          ListHeaderComponent={
+            <>
+              {/* Header */}
+              <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.replace("/Cart")}>
+                  <Feather name="arrow-left" size={22} color="#222" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Address</Text>
+              </View>
 
-            <View style={styles.cardSeparator} />
-            <Text style={styles.deliveryEstimatesTitle}>Delivery Estimates</Text>
-          </>
-        }
-        ListFooterComponent={
-          <TouchableOpacity
-            style={styles.deliverHereButton}
-            onPress={() => router.push("/payment")}
-          >
-            <Text style={styles.deliverHereButtonText}>DELIVER HERE</Text>
-          </TouchableOpacity>
-        }
-        contentContainerStyle={{ paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-      />
+              {/* Stepper */}
+              <View style={styles.stepper}>
+                {steps.map((step, index) => {
+                  const isCompleted = index < currentStep;
+                  const isActive = index === currentStep;
+
+                  return (
+                    <React.Fragment key={step}>
+                      <View
+                        style={[
+                          styles.dot,
+                          isCompleted && styles.dotCompleted,
+                          isActive && styles.dotActive,
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.label,
+                          isCompleted || isActive
+                            ? styles.labelActive
+                            : styles.labelInactive,
+                        ]}
+                      >
+                        {step}
+                      </Text>
+                      {index < steps.length - 1 && (
+                        <View
+                          style={[
+                            styles.line,
+                            index < currentStep
+                              ? styles.lineActive
+                              : styles.lineInactive,
+                          ]}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </View>
+
+              {/* Address Block */}
+              <View style={styles.addressListContainer}>
+                <View style={styles.addressDetailsContainer}>
+                  <View style={styles.addressHeaderRow}>
+                    <Text style={styles.addressName}>
+                      {temp_address?.fullname}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => router.push("/Select_address")}
+                    >
+                      <Text style={styles.changeButton}>Change</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.addressLine}>
+                    {temp_address?.flatBuilding}
+                  </Text>
+                  <Text style={styles.addressLine}>
+                    {temp_address?.locality}
+                  </Text>
+                  <Text style={styles.addressLine}>
+                    {`${temp_address?.city}, ${temp_address?.state}, ${temp_address?.pincode}`}
+                  </Text>
+                  {temp_address?.landmark && (
+                    <Text style={styles.addressLine}>
+                      Landmark: {temp_address.landmark}
+                    </Text>
+                  )}
+                  {temp_address?.addressType && (
+                    <Text style={styles.addressLine}>
+                      Type: {temp_address.addressType}
+                    </Text>
+                  )}
+                  <View style={styles.mobileContainer}>
+                    <Text style={styles.mobileLabel}>Mobile: </Text>
+                    <Text style={styles.mobileNumber}>
+                      {temp_address?.mobile}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.cardSeparator} />
+              <Text style={styles.deliveryEstimatesTitle}>
+                Delivery Estimates
+              </Text>
+            </>
+          }
+          contentContainerStyle={{ paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+        />
+        <TouchableOpacity
+          style={styles.deliverHereButton}
+          onPress={() => router.push("/payment")}
+        >
+          <Text style={styles.deliverHereButtonText}>DELIVER HERE</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   stepper: {
@@ -367,8 +370,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#222",
-    marginBottom: 12,
-    marginLeft:16,
+    marginVertical: 12,
+    marginLeft: 16,
   },
   deliveryItem: {
     flexDirection: "row",
@@ -378,7 +381,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
     paddingBottom: 12,
     backgroundColor: "#fff",
-    marginLeft:12,
+    marginLeft: 12,
   },
   deliveryItemImage: {
     width: 70,
@@ -401,7 +404,8 @@ const styles = StyleSheet.create({
   deliverHereButton: {
     backgroundColor: "#000",
     marginHorizontal: 16,
-    marginTop: 80,
+    marginTop: 10,
+    marginBottom:10,
     paddingVertical: 16,
     borderRadius: 4,
     alignItems: "center",

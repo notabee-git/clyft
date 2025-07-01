@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ export default function CartScreen() {
   const steps = ["Cart", "Address", "Payment"];
   const currentStep = 0; // 0 = Cart, 1 = Address, 2 = Payment
   const { cart, incrementItem, decrementItem, removeItem, address } = useCart();
+  const flatListRef = useRef<FlatList>(null);
 
   // Calculate billing breakdown
   const { Total, GST, Discount, DeliveryFee, PlatformFee, GrandTotal } =
@@ -56,14 +57,11 @@ export default function CartScreen() {
         GrandTotal: grandTotal,
       };
     }, [cart]);
-    // console.log(address);
+  // console.log(address);
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* Go back to Homepage */}
-      <TouchableOpacity
-        onPress={() => router.back()}
-        style={styles.header}
-      >
+      <TouchableOpacity onPress={() => router.back()} style={styles.header}>
         <Feather name="arrow-left" size={22} color="#222" />
         <Text style={styles.headerTitle}>Your Cart</Text>
       </TouchableOpacity>
@@ -130,6 +128,7 @@ export default function CartScreen() {
       {cart.length > 0 ? (
         <>
           <FlatList
+            ref={flatListRef}
             data={cart}
             keyExtractor={(item, index) => item.product.name + index}
             renderItem={({ item }) => (
@@ -147,6 +146,7 @@ export default function CartScreen() {
                   {/* Product Details */}
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.itemName}>{item.product.name}</Text>
+                    <Text>{item.product.variants[item.variantIndex].size}</Text>
 
                     {/* Quantity Controls */}
                     <View style={styles.qtyRow}>
@@ -177,7 +177,7 @@ export default function CartScreen() {
                       </Text>
 
                       {/* Discount Display (inactive due to same price logic) */}
-                      {item.price && item.price > item.price && (
+                      {/* {item.price && item.price > item.price && (
                         <>
                           <Text style={styles.itemOriginalPrice}>
                             ₹{item.price.toFixed(2)}
@@ -190,7 +190,7 @@ export default function CartScreen() {
                             % off)
                           </Text>
                         </>
-                      )}
+                      )} */}
                     </View>
 
                     {/* Save for later & Remove actions */}
@@ -215,58 +215,62 @@ export default function CartScreen() {
                 </View>
               </View>
             )}
+            ListFooterComponent={
+              <View style={styles.billSummary}>
+                <Text style={styles.billHeader}>Bill Summary</Text>
+                <View style={styles.billRow}>
+                  <Text>Total</Text>
+                  <Text>₹{Total.toFixed(2)}</Text>
+                </View>
+                <View style={styles.billRow}>
+                  <Text>GST</Text>
+                  <Text>₹{GST.toFixed(2)}</Text>
+                </View>
+                <View style={styles.billRow}>
+                  <Text>Discount</Text>
+                  <Text>-₹{Discount.toFixed(2)}</Text>
+                </View>
+                <View style={styles.billRow}>
+                  <Text>Delivery Fee</Text>
+                  <Text>₹{DeliveryFee.toFixed(2)}</Text>
+                </View>
+                <View style={styles.billRow}>
+                  <Text>Platform Fee</Text>
+                  <Text>₹{PlatformFee.toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.separatorLine} />
+
+                <View style={styles.billRow}>
+                  <Text style={styles.grandTotal}>Grand Total</Text>
+                  <Text style={styles.grandTotal}>
+                    ₹{GrandTotal.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            }
           />
 
-          {/* Total Summary + Place Order Button */}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalAmount}>₹{GrandTotal.toFixed(2)}</Text>
-            <TouchableOpacity style={styles.placeOrderButton}>
-              <Text
-                style={styles.placeOrderText}
-                onPress={() => router.push("/Delivery_estimate")}
+          {/* Sticky Footer */}
+          <View style={styles.footerBar}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.totalAmount}>₹{GrandTotal.toFixed(2)}</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  flatListRef.current?.scrollToEnd({ animated: true })
+                }
               >
-                Place Order
-              </Text>
+                <Text style={styles.viewDetailsTotal}>View Details</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Right side: Place Order */}
+            <TouchableOpacity
+              style={styles.placeOrderButton}
+              onPress={() => router.push("/Delivery_estimate")}
+            >
+              <Text style={styles.placeOrderText}>Place Order</Text>
             </TouchableOpacity>
-          </View>
-
-          {/* View Details toggle */}
-          <TouchableOpacity>
-            <Text style={styles.viewDetailsTotal}>View Details</Text>
-          </TouchableOpacity>
-
-          {/* Bill Summary Section */}
-          <View style={styles.billSummary}>
-            <Text style={styles.billHeader}>Bill Summary</Text>
-            <View style={styles.billRow}>
-              <Text>Total</Text>
-              <Text>₹{Total.toFixed(2)}</Text>
-            </View>
-            <View style={styles.billRow}>
-              <Text>GST</Text>
-              <Text>₹{GST.toFixed(2)}</Text>
-            </View>
-            <View style={styles.billRow}>
-              <Text>Discount</Text>
-              <Text>-₹{Discount.toFixed(2)}</Text>
-            </View>
-            <View style={styles.billRow}>
-              <Text>Delivery Fee</Text>
-              <Text>₹{DeliveryFee.toFixed(2)}</Text>
-            </View>
-            <View style={styles.billRow}>
-              <Text>Platform Fee</Text>
-              <Text>₹{PlatformFee.toFixed(2)}</Text>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.separatorLine} />
-
-            {/* Grand Total */}
-            <View style={styles.billRow}>
-              <Text style={styles.grandTotal}>Grand Total</Text>
-              <Text style={styles.grandTotal}>₹{GrandTotal.toFixed(2)}</Text>
-            </View>
           </View>
         </>
       ) : (
@@ -279,6 +283,17 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
+  footerBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fff",
+  },
+
   stepper: {
     flexDirection: "row",
     alignItems: "center",
@@ -480,16 +495,6 @@ const styles = StyleSheet.create({
     color: "#D32F2F",
     fontSize: 13,
   },
-  viewDetails: {
-    color: "#0C8744",
-    textDecorationLine: "underline",
-    fontSize: 14,
-    marginBottom: 7,
-    marginTop: 2,
-    marginLeft: 16,
-    alignSelf: "flex-start",
-    fontWeight: "500",
-  },
   qtyRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -568,7 +573,7 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     fontSize: 15,
     fontWeight: "500",
-    marginLeft: 16,
+    marginLeft: 1,
   },
   placeOrderButton: {
     backgroundColor: "#111",
