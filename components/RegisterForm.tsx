@@ -19,6 +19,9 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { checkAndCreateUser } from './addUser';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -29,13 +32,19 @@ export default function RegisterForm() {
   const [code, setCode] = useState("");
 
   // 🔒 Disable Android back button on this screen
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      return true; // This disables the back button
-    });
+  useFocusEffect(
+  useCallback(() => {
+    const onBackPress = () => {
+      return true; // Disable back
+    };
 
-    return () => backHandler.remove(); // cleanup when component unmounts
-  }, []);
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+    return () =>
+      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+  }, [])
+);
+
 
   const sendVerification = async () => {
     if (!phoneNumber.match(/^\+\d{10,}$/)) {
