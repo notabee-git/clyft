@@ -71,7 +71,7 @@ export default function ProductDetailScreen() {
   }, [selectedSize]);
 
   const productData = {
-    rating: 4.0,
+    rating: 0,
     reviewCount: 120,
     discountPercentage: 15.7,
     inStock: true,
@@ -91,7 +91,7 @@ export default function ProductDetailScreen() {
   };
 
   // const [quantity, setQuantity] = useState(productData.defaultQuantity);
-  
+
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [cartCount, setCartCount] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -121,18 +121,18 @@ export default function ProductDetailScreen() {
   // })();
 
   const getCurrentPrice = (sizeOverride?: string) => {
-  if (!widelisting[0]) return 0;
-  const sizeToUse = sizeOverride || selectedSize;
-  if (!sizeToUse) return 0;
+    if (!widelisting[0]) return 0;
+    const sizeToUse = sizeOverride || selectedSize;
+    if (!sizeToUse) return 0;
 
-  const variant = widelisting[0].variants.find((v) => v.size === sizeToUse);
-  if (!variant || !variant.priceTiers?.length) return 0;
+    const variant = widelisting[0].variants.find((v) => v.size === sizeToUse);
+    if (!variant || !variant.priceTiers?.length) return 0;
 
-  const slab = variant.priceTiers.find(
-    (s) => cartCount >= s.min && cartCount <= s.max
-  );
-  return slab ? slab.price : 0;
-};
+    const slab = variant.priceTiers.find(
+      (s) => cartCount >= s.min && cartCount <= s.max
+    );
+    return slab ? slab.price : 0;
+  };
 
   const handleAddToCart = () => {
     if (!widelisting[0] || !selectedSize) {
@@ -179,29 +179,14 @@ export default function ProductDetailScreen() {
         backTitle={subcategory}
       />
 
-      <View style={styles.header}>
-        {/* Uncomment if needed */}
-        {/* <View style={styles.headerTop}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <AntDesign name="arrowleft" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Product Detail</Text>
-        <TouchableOpacity style={styles.cartButton}>
-          <Feather name="shopping-cart" size={24} color="#333" />
-          {cartCount > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cartCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View> */}
+      {/* <View style={styles.header}>
         <View style={styles.locationContainer}>
           <Text style={styles.locationText}>Delivery to</Text>
           <Text>
             {`${productData.deliveryLocation.area}, ${productData.deliveryLocation.city}, ${productData.deliveryLocation.pincode}`}
           </Text>
         </View>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.scrollView}>
         {/* IMAGE CAROUSEL */}
@@ -254,16 +239,21 @@ export default function ProductDetailScreen() {
             <Text style={styles.brandText}>
               {widelisting.length > 0 ? widelisting[0].name : ""}
             </Text>
+            </View>
+            <View style={styles.brandRatingContainer}>
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingNumber}>
-                {productData.rating.toFixed(1)}
+                {widelisting[0]?.rating?.toFixed(1) ?? "0.0"}
               </Text>
+
               <View style={styles.starContainer}>
                 {[1, 2, 3, 4, 5].map((star, index) => (
                   <AntDesign
                     key={index}
                     name={
-                      index < Math.round(productData.rating) ? "star" : "staro"
+                      index < Math.round(widelisting[0]?.rating ?? 0)
+                        ? "star"
+                        : "staro"
                     }
                     size={16}
                     color="#fbbf24"
@@ -271,7 +261,7 @@ export default function ProductDetailScreen() {
                 ))}
               </View>
               <Text style={styles.reviewCount}>
-                ({productData.reviewCount})
+                ({widelisting[0]?.reviews?.toFixed(1) ?? "0.0"})
               </Text>
             </View>
           </View>
