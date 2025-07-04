@@ -15,6 +15,8 @@ export interface WideItemFb {
   image: string;
   bestSellingPrice: number;
   variants: Variant[];
+  rating:number;
+  reviews:number;
 }
 
 export interface Address {
