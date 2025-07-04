@@ -17,6 +17,7 @@ import { db } from "../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useCart } from "../context/cartContext";
 import { WideItemFb, CartItem } from "@/constants/types";
+import { TextInput } from 'react-native';
 
 import { CustomHeader } from "../components/CustomHeader";
 
@@ -176,7 +177,7 @@ export default function ProductDetailScreen() {
         //   pathname: '/subcategories/name',
         //   params: { name: encodeURIComponent(name) },
         // }}
-        backTitle={subcategory}
+        backTitle={Array.isArray(subcategory) ? subcategory[0] : subcategory}
       />
 
       {/* <View style={styles.header}>
@@ -332,7 +333,6 @@ export default function ProductDetailScreen() {
                 </View>
               ))}
         </View>
-
         <View style={styles.addToCartContainer}>
           <Text style={styles.quantityTitle}>Enter Quantity</Text>
           <View style={styles.quantityCartRow}>
@@ -343,10 +343,23 @@ export default function ProductDetailScreen() {
               >
                 <AntDesign name="minus" size={16} color="#333" />
               </TouchableOpacity>
-              <View style={styles.quantityValueContainer}>
-                <Text style={styles.quantityLabel}>Default</Text>
-                <Text style={styles.quantityValue}>{cartCount}</Text>
-              </View>
+
+              <TextInput
+                style={styles.quantityInput}
+                keyboardType="numeric"
+                value={String(cartCount)}
+                onChangeText={(text) => {
+                  const numericValue = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                  if (!isNaN(numericValue)) {
+                    setCartCount(numericValue);
+                  } else if (text === '') {
+                    setCartCount(0); // Optionally reset to 0
+                  }
+                }}
+                placeholder="0"
+                maxLength={4}
+              />
+
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={increaseQuantity}
@@ -354,6 +367,7 @@ export default function ProductDetailScreen() {
                 <AntDesign name="plus" size={16} color="#333" />
               </TouchableOpacity>
             </View>
+
             <TouchableOpacity
               style={styles.addToCartButton}
               onPress={handleAddToCart}
@@ -758,4 +772,18 @@ const styles = StyleSheet.create({
   cartIcon: {
     marginLeft: 8,
   },
+  quantityInput: {
+  width: 50,
+  height: 40,
+  textAlign: 'center',
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 6,
+  marginHorizontal: 8,
+  paddingVertical: 5,
+  fontSize: 16,
+  color: '#333',
+  backgroundColor: '#fff',
+},
+
 });
