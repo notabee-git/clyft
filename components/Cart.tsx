@@ -132,7 +132,15 @@ export default function CartScreen() {
             data={cart}
             keyExtractor={(item, index) => item.product.name + index}
             renderItem={({ item }) => (
-              <View style={styles.card}>
+              <TouchableOpacity style={styles.card} onPress={() =>
+                        router.push({
+                          pathname: "/Product_page",
+                          params: {
+                            name: item.product.name,
+                            subcategory: item.product.subcategoryName as string,
+                          },
+                        })
+                      }>
                 <View style={{ flexDirection: "row" }}>
                   {/* Product Image */}
                   <Image
@@ -195,12 +203,12 @@ export default function CartScreen() {
 
                     {/* Save for later & Remove actions */}
                     <View style={styles.actionRow}>
-                      <TouchableOpacity style={styles.outlinedButton}>
+                      {/* <TouchableOpacity style={styles.outlinedButton}>
                         <Feather name="bookmark" size={16} color="#0C8744" />
                         <Text style={styles.outlinedButtonTextGreen}>
                           Save for Later
                         </Text>
-                      </TouchableOpacity>
+                      </TouchableOpacity> */}
                       <TouchableOpacity
                         style={styles.outlinedButton}
                         onPress={() =>
@@ -213,7 +221,7 @@ export default function CartScreen() {
                     </View>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
             ListFooterComponent={
               <View style={styles.billSummary}>
@@ -222,10 +230,10 @@ export default function CartScreen() {
                   <Text>Total</Text>
                   <Text>₹{Total.toFixed(2)}</Text>
                 </View>
-                <View style={styles.billRow}>
+                {/* <View style={styles.billRow}>
                   <Text>GST</Text>
                   <Text>₹{GST.toFixed(2)}</Text>
-                </View>
+                </View> */}
                 <View style={styles.billRow}>
                   <Text>Discount</Text>
                   <Text>-₹{Discount.toFixed(2)}</Text>

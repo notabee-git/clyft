@@ -148,6 +148,10 @@ export default function ProductDetailScreen() {
       alert("Selected variant not found.");
       return;
     }
+    if (cartCount < 1) {
+      alert("Please select a valid quantity");
+      return;
+    }
 
     const item: CartItem = {
       product: widelisting[0],

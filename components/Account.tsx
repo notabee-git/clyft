@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, TextInput,
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-
+import { Footer } from "../components/Footer";
 import { onAuthStateChanged, getAuth } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useRouter } from 'expo-router'
@@ -13,7 +13,7 @@ import { CustomHeader } from './CustomHeader';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Define the screen names as a union type for type safety
-type ScreenName = '/your-orders' | '/Saved-Address' | '/profile' | '/help-and-support' | '/refunds' | '/paymentSettings' | '/clyftCash' | '/wallet' | '/rewards' | '/giftCards' | '/referEarn' | '/GSTDetails' | '/AboutUs' | '/FAQs' | '/Terms';
+type ScreenName = '/your-orders' | '/Saved-Address' | '/View_profile' | '/help-and-support' | '/refunds' | '/paymentSettings' | '/clyftCash' | '/wallet' | '/rewards' | '/giftCards' | '/referEarn' | '/GSTDetails' | '/AboutUs' | '/FAQs' | '/Terms';
 
 type FeatherIconName = keyof typeof Feather.glyphMap;
 
@@ -226,6 +226,7 @@ const ProfileAccessModal: React.FC<{
           </View>
         </Animated.View>
       </View>
+
     </Modal>
   );
 };
@@ -267,7 +268,7 @@ export default function AccountScreen() {
   const yourInfoItems: { icon: FeatherIconName; text: string; route: ScreenName }[] = [
     { icon: 'package', text: 'Your Orders', route: '/your-orders' },
     { icon: 'map-pin', text: 'Saved Addresses', route: '/Saved-Address' },
-    { icon: 'user', text: 'Profile', route: '/profile' },
+    { icon: 'user', text: 'Profile', route: '/View_profile' },
     { icon: 'headphones', text: 'Help & Support', route: '/help-and-support' },
     { icon: 'refresh-cw', text: 'Refunds', route: '/refunds' },
     { icon: 'credit-card', text: 'Payment settings', route: '/paymentSettings' },
@@ -499,6 +500,7 @@ export default function AccountScreen() {
         onClose={handleCloseProfileAccess}
         phoneNumber="+918008687540"
       />
+      <Footer/>
     </SafeAreaView>
   );
 }
