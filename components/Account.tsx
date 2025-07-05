@@ -10,6 +10,8 @@ import { useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native';
 import { CustomHeader } from './CustomHeader';
 
+// Inside your component
+
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Define the screen names as a union type for type safety
@@ -287,36 +289,54 @@ export default function AccountScreen() {
     { icon: 'file', text: 'Terms, Policies and Licenses', route: '/Terms' },
   ];
 
+
   
-  useFocusEffect(
-    useCallback(() => {
-      const fetchUserData = async () => {
-        const user = auth.currentUser;
+useFocusEffect(
+  useCallback(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
 
-        if (!user) return;
+      if (!user) {
+        // ⚠️ Show popup if not logged in
+        Alert.alert(
+          'Login Required',
+          'To view your profile.',
+          [
+            {
+              text: 'Go to Login',
+              onPress: () => router.push('/RegisterScreen'), // Change 'Login' to your actual login screen route name
+            },
+            {
+              text: 'Back to Home',
+              onPress: () => router.push('/Homepage'), // Change 'Home' to your home screen route name
+              style: 'cancel',
+            },
+          ],
+          { cancelable: false }
+        );
+        return;
+      }
 
-        try {
-          console.log('Fetching profile for UID:', user.uid);
+      try {
+        console.log('Fetching profile for UID:', user.uid);
+        const docRef = doc(db, 'Users', user.uid);
+        const docSnap = await getDoc(docRef);
 
-          const docRef = doc(db, 'Users', user.uid);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            console.log('User data fetched:', data);
-            setUserData(data);
-          } else {
-            console.warn('⚠️ No such user document in Firestore');
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log('User data fetched:', data);
+          setUserData(data);
+        } else {
+          console.warn('⚠️ No such user document in Firestore');
         }
-      };
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
 
-      fetchUserData();
-    }, [])
-  );
-
+    fetchUserData();
+  }, [])
+);
   const handleEditProfile = () => {
     setShowProfileAccess(true);
   };

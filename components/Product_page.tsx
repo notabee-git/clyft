@@ -140,6 +140,10 @@ export default function ProductDetailScreen() {
       alert("Please select a size.");
       return;
     }
+    if(cartCount < 1) {
+      alert("Please select a valid quantity.");
+      return;
+    }
 
     const variantIndex = widelisting[0].variants.findIndex(
       (v) => v.size === selectedSize
