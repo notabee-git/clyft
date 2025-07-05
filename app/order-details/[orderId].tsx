@@ -88,6 +88,15 @@ export default function OrderDetailsScreen() {
 
         // Assuming OrderID is unique, get the first document
         // You can replace this hardcoded product & billing info with fetchedData properties
+        const createdAt = data.createdAt.toDate();
+        const deliveryDate = new Date(createdAt);
+        deliveryDate.setDate(deliveryDate.getDate() + 1);
+
+        const formattedDeliveryDate = deliveryDate.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
         setOrderData({
           orderId: data.OrderID, // Note: make sure Firestore field name is 'OrderID' (case-sensitive)
           product: {
@@ -99,7 +108,7 @@ export default function OrderDetailsScreen() {
             image: { uri: ProdcutData.image }, // Fallback image
             canExchange: false,
             canReturn: false,
-            deliveryDate: "Tue, 27th May",
+            deliveryDate: formattedDeliveryDate,
             rating: 0,
             isDelivered: data.status == "delivered",
             quantity: data.quantity,

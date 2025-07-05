@@ -65,31 +65,32 @@ const YourOrdersScreen = () => {
         productImageMap[data.name] = data.image; // assuming `image` is a URL
       });
 
-      const fetchedOrders: Order[] = orderSnapshot.docs.map((doc) => {
-        const data = doc.data();
+      const fetchedOrders: Order[] = orderSnapshot.docs
+  .map((doc) => {
+    const data = doc.data();
 
-        const matchedImageURL = productImageMap[data.item];
-        const productImage = matchedImageURL
-          ? { uri: matchedImageURL }
-          : require("../assets/cement.png"); // fallback image
+    const matchedImageURL = productImageMap[data.item];
+    const productImage = matchedImageURL
+      ? { uri: matchedImageURL }
+      : require("../assets/cement.png");
 
-        return {
-          id: data.OrderID,
-          status: data.status as
-            | "delivered"
-            | "pending"
-            | "cancelled"
-            | "order_ready"
-            | "out_for_delivery"
-            | "shipped",
-          placedDate: data.createdAt.toDate().toLocaleString(),
-          amount: data.total,
-          name: data.item,
-          size: data.size,
-          quantity: data.quantity, // Assuming `data.item` is the product name
-          products: [{ image: productImage }],
-        };
-      });
+    const createdAt = data.createdAt.toDate();
+
+    return {
+      id: data.OrderID,
+      status: data.status,
+      placedDate: createdAt.toLocaleString(), // keep this as string for display
+      amount: data.total,
+      name: data.item,
+      size: data.size,
+      quantity: data.quantity,
+      products: [{ image: productImage }],
+      _createdAt: createdAt, // ⬅️ Add this temporarily for sorting
+    };
+  })
+  .sort((a, b) => b._createdAt.getTime() - a._createdAt.getTime()) // ⬅️ sort by createdAt desc
+  .map(({ _createdAt, ...rest }) => rest); // ⬅️ remove _createdAt before saving to state
+
 
       setOrders(fetchedOrders);
     } catch (err) {
